@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Arrow Calculations</title>
+    <script type="text/javascript" src="konva.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+
+        #buttons {
+            position: absolute;
+            top: 5px;
+            left: 10px;
+        }
+                
+        #buttons > input {
+            padding: 10px;
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="sidenav.css" />
+</head>
+<body>
+    
+<script type="text/javascript" src="sidenav.js"></script>
+
+<!-- Settings Menu -->
+<div id="settings" class="sidenav">
+    <a id="leftnavbtn" href="javascript:void(0)" class="sidenavbtn" onclick="openLeftNav()">&raquo;</a>
+    <a href="#">Random</a>
+</div>
+
+<div id="canvas"></div>
+<script type="text/javascript" src="canvas.js"></script>
+
+</body>
+</html>
