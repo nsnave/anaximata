@@ -18,20 +18,36 @@ const modes = {
   REMOVE: "remove",
 };
 
-var mode = modes.SELECT;
+let mode = modes.SELECT;
 
-var stage = new Konva.Stage({
+//circle ids
+let circle_ids = 0;
+
+//shared constants
+const stroke_color = "black";
+
+//circle constants
+const radius = 40;
+const circle_width = 5;
+
+//arrow constants
+const arrow_width = 4;
+const arrow_pointer_size = 10;
+const self_arrow_radius = radius * 0.8;
+const pointer_width = 10;
+
+const stage = new Konva.Stage({
   container: "canvas",
   width: window.innerWidth,
   height: window.innerHeight,
   draggable: true,
 });
 
-var layer = new Konva.Layer();
+const layer = new Konva.Layer();
 
 //handles zooming via scroll on desktop
 //  initial src: https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html
-var scaleBy = 0.94;
+const scaleBy = 0.94;
 stage.on("wheel", (e) => {
   e.evt.preventDefault();
 
@@ -62,9 +78,6 @@ function updateStageSize() {
 }
 
 window.addEventListener("resize", updateStageSize);
-
-//circle ids
-var ids = 0;
 
 //generates and returns a random color
 //  src: https://stackoverflow.com/a/1484514/11039508
@@ -117,15 +130,7 @@ function calcPoints(x1, y1, x2, y2, r1, r2) {
   return p;
 }
 
-var radius = 40;
-var from_circle;
-var selected_circle = null;
-var hovering = false;
-
-var temp_arrow = null;
-var arrow_width = 4;
-var pointer_width = 10;
-
+//arrow event functions
 function arrowClickEvent(e) {
   if (mode == modes.REMOVE) {
     e.target.destroy();
@@ -148,15 +153,16 @@ function arrowOutEvent(e) {
 }
 
 //creates a new arrow between two points
-function newArrow(x1, y1, x2, y2, r1, r2) {
+function newArrow(points) {
   var arrow = new Konva.Arrow({
-    points: calcPoints(x1, y1, x2, y2, r1, r2),
-    pointerLength: 10,
-    pointerWidth: 10,
+    points: points,
+    pointerLength: arrow_pointer_size,
+    pointerWidth: arrow_pointer_size,
     tension: 100,
-    fill: "black",
-    stroke: "black",
+    fill: stroke_color,
+    stroke: stroke_color,
     strokeWidth: arrow_width,
+    name: "arrow",
   });
 
   arrow.on("mouseover", arrowOverEvent);
@@ -166,48 +172,89 @@ function newArrow(x1, y1, x2, y2, r1, r2) {
   return arrow;
 }
 
-var temp_loc_x = stage.width() / 2;
-var temp_loc_y = stage.height() / 2;
-var temp_radius = radius * 0.8;
-var temp_thing1 = new Konva.Arc({
-  x: temp_loc_x,
-  y: temp_loc_y,
-  innerRadius: temp_radius,
-  outerRadius: temp_radius,
-  angle: 260,
-  rotation: 10,
-  stroke: "black",
-  strokeWidth: arrow_width,
-});
-layer.add(temp_thing1);
+//self-arrow event functions
+function selfArrowClickEvent(e) {
+  if (mode == modes.REMOVE) {
+    e.target.parent.destroy();
 
-var temp_thing2_loc_x = temp_loc_x + temp_radius;
-var temp_thing2 = new Konva.Arrow({
-  points: [
-    temp_thing2_loc_x,
-    temp_loc_y + 5,
-    temp_thing2_loc_x + 2,
-    temp_loc_y - 1,
-  ],
-  pointerLength: 10,
-  pointerWidth: 10,
-  tension: 100,
-  fill: "black",
-  stroke: "black",
-  strokeWidth: arrow_width,
-});
-layer.add(temp_thing2);
+    layer.draw();
+  }
+}
+
+function selfArrowOverEvent(e) {
+  if (mode == modes.SELECT || mode == modes.REMOVE) {
+    let children = e.target.parent.getChildren();
+    children.each(function (child, n) {
+      child.strokeWidth(arrow_width + 3);
+    });
+
+    layer.draw();
+  }
+}
+
+function selfArrowOutEvent(e) {
+  let children = e.target.parent.getChildren();
+  children.each(function (child, n) {
+    child.strokeWidth(arrow_width);
+  });
+
+  layer.draw();
+}
+
+//creates a new self-pointing arrow centered at (x, y)
+function newSelfArrow(x, y) {
+  let arc = new Konva.Arc({
+    x: 0,
+    y: 0,
+    innerRadius: self_arrow_radius,
+    outerRadius: self_arrow_radius,
+    angle: 260,
+    rotation: 10,
+    stroke: stroke_color,
+    strokeWidth: arrow_width,
+    name: "self-arrow",
+  });
+
+  var tip = new Konva.Arrow({
+    points: [self_arrow_radius, 5, self_arrow_radius + 2, -1],
+    pointerLength: arrow_pointer_size,
+    pointerWidth: arrow_pointer_size,
+    tension: 100,
+    fill: stroke_color,
+    stroke: stroke_color,
+    strokeWidth: arrow_width,
+    name: "self-arrow",
+  });
+
+  let group = new Konva.Group({
+    x: x,
+    y: y,
+  });
+  group.add(arc);
+  group.add(tip);
+
+  group.on("mouseover", selfArrowOverEvent);
+  group.on("mouseout", selfArrowOutEvent);
+  group.on("click", selfArrowClickEvent);
+
+  return group;
+}
+let temp_self_arrow = newSelfArrow(stage.width() / 2, stage.height() / 2);
+layer.add(temp_self_arrow);
 layer.draw();
 
 //creates a new arrow pointing from circle1 to circle2
+//  or a new self-arrow if circle1==circle2
 function newCircleArrow(circle1, circle2) {
   return newArrow(
-    circle1.getX(),
-    circle1.getY(),
-    circle2.getX(),
-    circle2.getY(),
-    radius,
-    radius
+    calcPoints(
+      circle1.getX(),
+      circle1.getY(),
+      circle2.getX(),
+      circle2.getY(),
+      radius,
+      radius
+    )
   );
 }
 
@@ -233,11 +280,19 @@ function adjustPoints(e) {
   layer.draw();
 }
 
-//modes events for circles
+//variables for circle events
+let from_circle;
+let selected_circle = null;
+let hovering = false;
+//let self_hovering = false;
+let temp_arrow = null;
+//let temp_self_arrow = null;
+
+//handles changing the mode for circles
 function changeMode(new_mode) {
   if (mode == modes.SELECT) {
     if (selected_circle != null) {
-      selected_circle.stroke("black");
+      selected_circle.stroke(stroke_color);
 
       selected_circle = null;
 
@@ -251,16 +306,25 @@ function changeMode(new_mode) {
       temp_arrow = null;
       layer.draw();
     }
+    /*
+    if (temp_self_arrow != null) {
+      temp_self_arrow.destroy();
+      temp_self_arrow = null;
+      layer.draw();
+    }
+    */
   }
 
   mode = new_mode;
 }
 
+//circle event functions
 function circleClickEvent(e) {
   switch (mode) {
     case modes.SELECT: {
+      //changes selected circle to red
       if (selected_circle != null) {
-        selected_circle.stroke("black");
+        selected_circle.stroke(stroke_color);
       }
       selected_circle = e.target;
 
@@ -272,13 +336,17 @@ function circleClickEvent(e) {
       break;
     }
 
+    //begins drawing new transition arrow
     case modes.INSERT.TRANSITION.FROM: {
       selected_circle = e.target; //selected_circle should be null
 
-      temp_arrow = newArrow(0, 0, 0, 0, 0, 0);
+      temp_arrow = newArrow([0, 0, 0, 0]);
+      //temp_self_arrow = newSelfArrow(0, 0);
       layer.add(temp_arrow);
+      //layer.add(temp_self_arrow);
 
       temp_arrow.moveToBottom();
+      //temp_self_arrow.moveToBottom();
 
       layer.draw();
 
@@ -287,7 +355,15 @@ function circleClickEvent(e) {
       break;
     }
 
+    //finalizes new transition arrow
     case modes.INSERT.TRANSITION.TO: {
+      /*if (self_hovering) {
+        temp_self_arrow.setPoints(
+          selected_circle.getX() - radius - self_arrow_radius,
+          selected_circle.getY() + radius + self_arrow_radius
+        );
+        temp_arrow.destroy();
+      } else {*/
       temp_arrow.setPoints(
         calcPoints(
           selected_circle.getX(),
@@ -298,9 +374,12 @@ function circleClickEvent(e) {
           radius
         )
       );
+      //temp_self_arrow.destroy();
+      //}
 
       selected_circle = null;
       temp_arrow = null;
+      //temp_self_arrow = null;
       layer.draw();
 
       changeMode(modes.INSERT.TRANSITION.FROM);
@@ -308,6 +387,7 @@ function circleClickEvent(e) {
       break;
     }
 
+    //removes element
     case modes.REMOVE: {
       e.target.destroy();
 
@@ -323,11 +403,15 @@ function circleOverEvent(e) {
   e.target.radius(radius + 5);
   layer.draw();
 
+  //if adding new transition
   if (mode == modes.INSERT.TRANSITION.TO) {
     hovering = true;
 
+    //causes arrow to "stick" to circle being hovered over
     if (selected_circle != e.target) {
-      var points = calcPoints(
+      //self_hovering = false;
+
+      let points = calcPoints(
         selected_circle.getX(),
         selected_circle.getY(),
         e.target.getX(),
@@ -337,7 +421,10 @@ function circleOverEvent(e) {
       );
 
       temp_arrow.setPoints(points);
-    } else {
+    }
+    //changes arrow to self-arrow if hovering over selected_circle
+    else {
+      //self_hovering = true;
       temp_arrow.remove();
     }
 
@@ -349,6 +436,11 @@ function circleOutEvent(e) {
   if (mode == modes.INSERT.STATE) return;
 
   hovering = false;
+
+  if (mode == modes.INSERT.TRANSITION.TO) {
+  }
+
+  //self_hovering = false;
 
   e.target.radius(radius);
   layer.draw();
@@ -362,10 +454,11 @@ function newCircle() {
     x: coords.x,
     y: coords.y,
     radius: radius,
-    stroke: "black",
-    strokeWidth: 5,
+    stroke: stroke_color,
+    strokeWidth: circle_width,
     draggable: true,
-    id: ids++,
+    id: circle_ids++,
+    name: "circle",
   });
 
   circle.on("mouseover", circleOverEvent);
@@ -399,6 +492,7 @@ stage.on("mouseenter", function () {
 });
 
 stage.on("mouseleave", function () {
+  //destroys hover_circle
   if (mode == modes.INSERT.STATE) {
     hover_circle.destroy();
 
@@ -407,6 +501,7 @@ stage.on("mouseleave", function () {
 });
 
 stage.on("mousemove", function () {
+  //has hover_circle follow mouse
   if (mode == modes.INSERT.STATE) {
     var coords = getCoords();
 
@@ -414,23 +509,29 @@ stage.on("mousemove", function () {
     hover_circle.y(coords.y);
 
     layer.draw();
-  } else if (mode == modes.INSERT.TRANSITION.TO && hovering == false) {
-    var coords = getCoords();
-
-    var points = calcPoints(
-      selected_circle.getX(),
-      selected_circle.getY(),
-      coords.x,
-      coords.y,
-      radius,
-      0
-    );
-
-    temp_arrow.setPoints(points);
-    layer.add(temp_arrow);
-
-    layer.draw();
   }
+  //adjusts arrow accordingly if currently inserting a transition
+  else if (mode == modes.INSERT.TRANSITION.TO) {
+    if (hovering == false) {
+      var coords = getCoords();
+
+      var points = calcPoints(
+        selected_circle.getX(),
+        selected_circle.getY(),
+        coords.x,
+        coords.y,
+        radius,
+        0
+      );
+
+      temp_arrow.setPoints(points);
+      layer.add(temp_arrow);
+
+      layer.draw();
+    }
+  }
+  //hovering == true && self_hovering == true
+  //else if (self_hovering == true) {}
 });
 
 //reduces size of hover_circle on mousedown, restores on mouseup
@@ -513,7 +614,7 @@ document.getElementById("minus").addEventListener("click", function () {
 
   connected.pop();
 
-  ids--;
+  circle_ids--;
 
   layer.draw();
 });
