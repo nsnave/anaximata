@@ -135,7 +135,7 @@ function arrowClickEvent(e) {
 }
 
 function arrowOverEvent(e) {
-  if (mode == modes.SELECT) {
+  if (mode == modes.SELECT || mode == modes.REMOVE) {
     e.target.strokeWidth(arrow_width + 3);
 
     layer.draw();
@@ -166,16 +166,37 @@ function newArrow(x1, y1, x2, y2, r1, r2) {
   return arrow;
 }
 
-var temp_thing = new Konva.Arrow({
-  points: [0, 10, 10, 0, 20, 20, 30, 10],
+var temp_loc_x = stage.width() / 2;
+var temp_loc_y = stage.height() / 2;
+var temp_radius = radius * 0.8;
+var temp_thing1 = new Konva.Arc({
+  x: temp_loc_x,
+  y: temp_loc_y,
+  innerRadius: temp_radius,
+  outerRadius: temp_radius,
+  angle: 260,
+  rotation: 10,
+  stroke: "black",
+  strokeWidth: arrow_width,
+});
+layer.add(temp_thing1);
+
+var temp_thing2_loc_x = temp_loc_x + temp_radius;
+var temp_thing2 = new Konva.Arrow({
+  points: [
+    temp_thing2_loc_x,
+    temp_loc_y + 5,
+    temp_thing2_loc_x + 2,
+    temp_loc_y - 1,
+  ],
   pointerLength: 10,
   pointerWidth: 10,
-  tension: 10,
+  tension: 100,
   fill: "black",
   stroke: "black",
   strokeWidth: arrow_width,
 });
-layer.add(temp_thing);
+layer.add(temp_thing2);
 layer.draw();
 
 //creates a new arrow pointing from circle1 to circle2
