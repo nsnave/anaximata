@@ -20,8 +20,9 @@ const modes = {
 
 let mode = modes.SELECT;
 
-//circle ids
+//ids
 let circle_ids = 0;
+let arrow_ids = 0;
 
 //shared constants
 const stroke_color = "black";
@@ -36,9 +37,11 @@ const arrow_pointer_size = 10;
 const self_arrow_radius = radius * 0.8;
 const pointer_width = 10;
 
-//adjacency lists
-const directed_in = {};
-const directed_out = {};
+//adjacency lists, etc.
+const directed_in = {}; //(circle.id) -> [circles that point to circle]
+const directed_out = {}; //(circle.id) -> [circles that circle points to]
+const arrows = {}; //(circle1.id, circle2.id) -> arrow that points connects circle1 and circle2
+const circles = {}; //(arrow.id) -> { out: circle1, in: circle2 }
 
 const stage = new Konva.Stage({
   container: "canvas",
@@ -271,28 +274,6 @@ function newCircleArrow(circle1, circle2) {
       );
 }
 
-//redraws the arrows as circle moves
-function adjustPoints(e) {
-  var cur = e.target;
-  var id = cur.id();
-
-  //redraws arrows directed out of circle
-  var arr_len = arrows[id].length;
-  for (var i = 0; i < arr_len; i++) {
-    var p = calcPoints(cur, connected[id][i]);
-    arrows[id][i].setPoints(p);
-  }
-
-  //redraws arrows directed in to circle
-  len = circles.length;
-  for (var i = id + 1; i < len; i++) {
-    var p = calcPoints(circles[i], cur);
-    arrows[i][id].setPoints(p);
-  }
-
-  layer.draw();
-}
-
 //variables for circle events
 let from_circle;
 let selected_circle = null;
@@ -343,6 +324,9 @@ function circleClickEvent(e) {
       selected_circle.stroke("red");
       selected_circle.moveToTop();
 
+      console.log(JSON.stringify(directed_in[selected_circle.id()]));
+      console.log(JSON.stringify(directed_out[selected_circle.id()]));
+
       layer.draw();
 
       break;
@@ -371,13 +355,21 @@ function circleClickEvent(e) {
 
     //finalizes new transition arrow
     case modes.INSERT.TRANSITION.TO: {
+      let out_circle = selected_circle;
+      let in_circle = null;
+      let arrow = null;
+
+      //adds self-referencing arrow
       if (self_hovering) {
-        console.log("circleClick: self_hovering");
         temp_self_arrow.setX(selected_circle.getX());
         temp_self_arrow.setY(selected_circle.getY());
         temp_arrow.destroy();
-      } else {
-        console.log("circleClick: not self_hovering");
+
+        in_circle = selected_circle;
+        arrow = temp_self_arrow;
+      }
+      //adds arrow between two distinct circles
+      else {
         temp_arrow.setPoints(
           calcPoints(
             selected_circle.getX(),
@@ -389,11 +381,28 @@ function circleClickEvent(e) {
           )
         );
         temp_self_arrow.destroy();
+
+        in_circle = e.target;
+        arrow = temp_arrow;
       }
 
       selected_circle = null;
       temp_arrow = null;
       temp_self_arrow = null;
+
+      //assings arrow an id
+      arrow.setAttr("id", arrow_ids++);
+
+      //adds circles and arrow to the adjaceny lists
+      directed_out[out_circle.id()].push(in_circle);
+      directed_in[in_circle.id()].push(out_circle);
+      arrows[out_circle.id()][in_circle.id()] = arrow;
+      circles[arrow.id()] = { out: out_circle, in: in_circle };
+
+      console.log("directed_in: " + JSON.stringify(directed_in));
+      console.log("directed_out: " + JSON.stringify(directed_out));
+      console.log("arrows: " + JSON.stringify(arrows));
+      console.log("circles: " + JSON.stringify(circles));
 
       layer.draw();
 
@@ -424,8 +433,6 @@ function circleOverEvent(e) {
 
     //causes arrow to "stick" to circle being hovered over
     if (selected_circle != e.target) {
-      console.log("circleOver: not self_overing");
-
       let points = calcPoints(
         selected_circle.getX(),
         selected_circle.getY(),
@@ -437,9 +444,8 @@ function circleOverEvent(e) {
 
       temp_arrow.setPoints(points);
     }
-    //changes arrow to self-arrow if hovering over selected_circle
+    //hides temp_arrow if hovering over selected_circle
     else {
-      console.log("circleOver: self_hovering");
       temp_arrow.remove();
     }
 
@@ -455,9 +461,52 @@ function circleOutEvent(e) {
   if (mode == modes.INSERT.TRANSITION.TO) {
   }
 
-  console.log("circle out");
-
   e.target.radius(radius);
+  layer.draw();
+}
+
+//redraws the arrows as circle moves
+function circleDragMoveEvent(e) {
+  let cur = e.target;
+  let id = cur.id();
+
+  //redraws self-arrow
+  let self_arrow = arrows[id][id];
+  if (self_arrow != undefined) {
+    self_arrow.setX(cur.getX());
+    self_arrow.setY(cur.getY());
+  }
+
+  //redraws arrows directed out of circle
+  directed_out[id].forEach(function (other, n) {
+    if (cur != other) {
+      let p = calcPoints(
+        cur.getX(),
+        cur.getY(),
+        other.getX(),
+        other.getY(),
+        radius,
+        radius
+      );
+      arrows[id][other.id()].setPoints(p);
+    }
+  });
+
+  //redraws arrows directed in to circle
+  directed_in[id].forEach(function (other, n) {
+    if (cur != other) {
+      let p = calcPoints(
+        other.getX(),
+        other.getY(),
+        cur.getX(),
+        cur.getY(),
+        radius,
+        radius
+      );
+      arrows[other.id()][id].setPoints(p);
+    }
+  });
+
   layer.draw();
 }
 
@@ -476,10 +525,15 @@ function newCircle() {
     name: "circle",
   });
 
+  directed_in[circle.id()] = [];
+  directed_out[circle.id()] = [];
+  arrows[circle.id()] = {};
+
   circle.on("mouseover", circleOverEvent);
   circle.on("mouseout", circleOutEvent);
   circle.on("mousedown", circleOutEvent);
   circle.on("click", circleClickEvent);
+  circle.on("dragmove", circleDragMoveEvent);
 
   return circle;
 }
@@ -556,14 +610,14 @@ stage.on("mousemove", function () {
       if (self_hovering == false) {
         temp_arrow.remove();
         layer.add(temp_self_arrow);
-        console.log("self_hovering");
+
         self_hovering = true;
         return;
       }
     } else if (self_hovering == true) {
       temp_self_arrow.remove();
       layer.add(temp_arrow);
-      console.log("not self_hovering");
+
       self_hovering = false;
       return;
     }
@@ -622,6 +676,7 @@ document.getElementById("remove").addEventListener("click", function () {
   changeMode(modes.REMOVE);
 });
 
+/*
 //handles the addition of a new circle to the stage
 document.getElementById("plus").addEventListener("click", function () {
   var c = newCircle();
@@ -669,3 +724,4 @@ document.getElementById("minus").addEventListener("click", function () {
 
   layer.draw();
 });
+*/
