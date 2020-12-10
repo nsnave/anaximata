@@ -1,9 +1,7 @@
 /* Set the width of the side navigation to 250px and the left margin of the page content to 250px */
 function openLeftNav() {
   document.getElementById("settings").style.width = "250px";
-  let canvas = document.getElementById("canvas");
-  canvas.style.marginLeft = "250px";
-  console.log(canvas.style.width);
+  document.getElementById("canvas").style.marginLeft = "250px";
 
   var btn = document.getElementById("leftnavbtn");
   btn.setAttribute("onClick", "closeLeftNav()");

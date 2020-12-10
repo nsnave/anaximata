@@ -43,9 +43,13 @@ const directed_out = {}; //(circle.id) -> [circles that circle points to]
 const arrows = {}; //(circle1.id, circle2.id) -> arrow that points connects circle1 and circle2
 const circles = {}; //(arrow.id) -> { out: circle1, in: circle2 }
 
+//stage constants
+let stage_left_offset = 250;
+let stage_right_offset = 0;
+
 const stage = new Konva.Stage({
   container: "canvas",
-  width: window.innerWidth,
+  width: window.innerWidth - stage_left_offset - stage_right_offset,
   height: window.innerHeight,
   draggable: true,
 });
@@ -80,11 +84,17 @@ stage.on("wheel", (e) => {
 
 //makes canvas fit to window
 function updateStageSize() {
-  stage.width(window.innerWidth);
+  stage.width(window.innerWidth - stage_left_offset - stage_right_offset);
   stage.height(window.innerHeight);
 }
-
 window.addEventListener("resize", updateStageSize);
+
+//keeps track of canvas size within side menus
+function updateStageOffsets() {
+  stage_left_offset = document.getElementById("settings").offsetWidth;
+  updateStageSize();
+}
+window.addEventListener("transitionend", updateStageOffsets);
 
 //generates and returns a random color
 //  src: https://stackoverflow.com/a/1484514/11039508
