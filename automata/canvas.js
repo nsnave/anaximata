@@ -186,6 +186,22 @@ function newArrow(points) {
   return arrow;
 }
 
+//self-arrow angle function
+//  returns the proper angle for the arrow
+//    given mouse location and circle location
+function selfArrowAngle(mouse_x, mouse_y, circle_x, circle_y) {
+  let x = mouse_x - circle_x;
+  let y = mouse_y - circle_y;
+
+  if (x == 0 && y == 0) return;
+
+  let theta = Math.atan(y / x) * (180 / Math.PI) + 45;
+
+  if (x >= 0) theta = theta - 180;
+
+  return theta;
+}
+
 //self-arrow event functions
 function selfArrowClickEvent(e) {
   if (mode == modes.REMOVE) {
@@ -211,6 +227,20 @@ function selfArrowOutEvent(e) {
   children.each(function (child, n) {
     child.strokeWidth(arrow_width);
   });
+
+  layer.draw();
+}
+
+function selfArrowDragMoveEvent(e) {
+  let coords = getCoords();
+  let circle = circles[e.target.id()].in;
+
+  let theta = selfArrowAngle(coords.x, coords.y, circle.getX(), circle.getY());
+
+  e.target.rotation(theta);
+
+  e.target.setX(circle.getX());
+  e.target.setY(circle.getY());
 
   layer.draw();
 }
@@ -246,6 +276,7 @@ function newSelfArrow(x, y) {
   let group = new Konva.Group({
     x: x,
     y: y,
+    draggable: true,
   });
   group.add(arc);
   group.add(tip);
@@ -253,6 +284,7 @@ function newSelfArrow(x, y) {
   group.on("mouseover", selfArrowOverEvent);
   group.on("mouseout", selfArrowOutEvent);
   group.on("click", selfArrowClickEvent);
+  group.on("dragmove", selfArrowDragMoveEvent);
 
   return group;
 }
@@ -323,9 +355,6 @@ function circleClickEvent(e) {
 
       selected_circle.stroke("red");
       selected_circle.moveToTop();
-
-      console.log(JSON.stringify(directed_in[selected_circle.id()]));
-      console.log(JSON.stringify(directed_out[selected_circle.id()]));
 
       layer.draw();
 
@@ -398,11 +427,6 @@ function circleClickEvent(e) {
       directed_in[in_circle.id()].push(out_circle);
       arrows[out_circle.id()][in_circle.id()] = arrow;
       circles[arrow.id()] = { out: out_circle, in: in_circle };
-
-      console.log("directed_in: " + JSON.stringify(directed_in));
-      console.log("directed_out: " + JSON.stringify(directed_out));
-      console.log("arrows: " + JSON.stringify(arrows));
-      console.log("circles: " + JSON.stringify(circles));
 
       layer.draw();
 
@@ -624,14 +648,12 @@ stage.on("mousemove", function () {
 
     //rotates self_circle appropriately
     if (self_hovering == true) {
-      let x = coords.x - circle_coords.x;
-      let y = coords.y - circle_coords.y;
-
-      if (x == 0 && y == 0) return;
-
-      let theta = Math.atan(y / x) * (180 / Math.PI) + 45;
-
-      if (x >= 0) theta = theta - 180;
+      let theta = selfArrowAngle(
+        coords.x,
+        coords.y,
+        circle_coords.x,
+        circle_coords.y
+      );
 
       temp_self_arrow.rotation(theta);
       layer.draw();
