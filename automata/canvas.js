@@ -218,10 +218,15 @@ function removeCircle(circle) {
   delete directed_out[circle.id()];
   delete arrows[circle.id()];
 
-  if (start_circles[circle.id()] != undefined)
+  if (start_circles[circle.id()] != undefined) {
+    start_circles[circle.id()].destroy();
     delete start_circles[circle.id()];
+  }
 
-  if (end_circles[circle.id()] != undefined) delete end_circles[circle.id()];
+  if (end_circles[circle.id()] != undefined) {
+    end_circles[circle.id()].destroy();
+    delete end_circles[circle.id()];
+  }
 }
 
 //arrow event functions
