@@ -16,6 +16,10 @@ const modes = {
     },
   },
   REMOVE: "remove",
+  MARK: {
+    INITIAL: "initial",
+    FINAL: "final",
+  },
 };
 
 let mode = modes.SELECT;
@@ -30,18 +34,22 @@ const stroke_color = "black";
 //circle constants
 const radius = 40;
 const circle_width = 5;
+const final_subcircle_radius = radius * 0.8;
 
 //arrow constants
 const arrow_width = 4;
 const arrow_pointer_size = 10;
 const self_arrow_radius = radius * 0.8;
 const pointer_width = 10;
+const initial_arrow_length = radius;
 
 //adjacency lists, etc.
 const directed_in = {}; //(circle.id) -> [circles that point to circle]
 const directed_out = {}; //(circle.id) -> [circles that circle points to]
 const arrows = {}; //(circle1.id, circle2.id) -> arrow that points connects circle1 and circle2
 const circles = {}; //(arrow.id) -> { out: circle1, in: circle2 }
+const start_circles = {}; //(circle.id) -> initial arrow
+const end_circles = {}; //(circle.id) -> final sub-circle
 
 //stage constants
 let stage_left_offset = 250;
@@ -209,6 +217,11 @@ function removeCircle(circle) {
   delete directed_in[circle.id()];
   delete directed_out[circle.id()];
   delete arrows[circle.id()];
+
+  if (start_circles[circle.id()] != undefined)
+    delete start_circles[circle.id()];
+
+  if (end_circles[circle.id()] != undefined) delete end_circles[circle.id()];
 }
 
 //arrow event functions
@@ -397,6 +410,60 @@ function newCircleArrow(circle1, circle2) {
       );
 }
 
+function updateArrowPoints(arrow, circle1, circle2) {
+  if (arrow != null) {
+    let p = calcPoints(
+      circle1.getX(),
+      circle1.getY(),
+      circle2.getX(),
+      circle2.getY(),
+      circle1.radius(),
+      circle2.radius()
+    );
+    arrow.setPoints(p);
+  }
+}
+
+//creates a new initial arrow pointing to (x, y)
+function newInitialArrow(x, y) {
+  let shared_offset = -radius - circle_width - 5;
+  let arrow = new Konva.Arrow({
+    points: [shared_offset - initial_arrow_length, 0, shared_offset, 0],
+    pointerLength: arrow_pointer_size,
+    pointerWidth: arrow_pointer_size,
+    tension: 100,
+    fill: stroke_color,
+    stroke: stroke_color,
+    strokeWidth: arrow_width,
+    name: "initial-arrow",
+  });
+
+  let group = new Konva.Group({
+    x: x,
+    y: y,
+    draggable: true,
+    name: "initial-arrow",
+  });
+
+  group.add(arrow);
+
+  return group;
+}
+
+//creates a new final sub-circle centered at (x, y)
+function newFinalSubCircle(x, y) {
+  var circle = new Konva.Circle({
+    x: x,
+    y: y,
+    radius: final_subcircle_radius,
+    stroke: stroke_color,
+    strokeWidth: circle_width,
+    draggable: true,
+    name: "final-subcircle",
+  });
+  return circle;
+}
+
 //variables for circle events
 let from_circle;
 let selected_circle = null;
@@ -404,6 +471,8 @@ let hovering = false;
 let self_hovering = false;
 let temp_arrow = null;
 let temp_self_arrow = null;
+let temp_initial_arrow = null;
+let temp_final_subcircle = null;
 
 //handles changing the mode for circles
 function changeMode(new_mode) {
@@ -431,20 +500,6 @@ function changeMode(new_mode) {
   }
 
   mode = new_mode;
-}
-
-function updateArrowPoints(arrow, circle1, circle2) {
-  if (arrow != null) {
-    let p = calcPoints(
-      circle1.getX(),
-      circle1.getY(),
-      circle2.getX(),
-      circle2.getY(),
-      circle1.radius(),
-      circle2.radius()
-    );
-    arrow.setPoints(p);
-  }
 }
 
 //circle event functions
@@ -570,25 +625,66 @@ function circleClickEvent(e) {
       layer.draw();
       break;
     }
+
+    case modes.MARK.INITIAL: {
+      if (start_circles[e.target.id()] == undefined) {
+        start_circles[e.target.id()] = temp_initial_arrow;
+        temp_initial_arrow = null;
+      }
+      break;
+    }
+
+    case modes.MARK.FINAL: {
+      if (end_circles[e.target.id()] == undefined) {
+        end_circles[e.target.id()] = temp_final_subcircle;
+        temp_final_subcircle = null;
+      }
+      break;
+    }
   }
 }
 
 function circleOverEvent(e) {
   if (mode == modes.INSERT.STATE) return;
 
-  e.target.radius(radius + 5);
-
-  //if adding new transition
-  if (mode == modes.INSERT.TRANSITION.TO) {
-    hovering = true;
-
-    //causes arrow to "snap" to the circle being hovered over
-    if (selected_circle != e.target) {
-      updateArrowPoints(temp_arrow, selected_circle, e.target);
+  switch (mode) {
+    case modes.MARK.INITIAL: {
+      if (start_circles[e.target.id()] == undefined) {
+        temp_initial_arrow = newInitialArrow(e.target.getX(), e.target.getY());
+        layer.add(temp_initial_arrow);
+        temp_initial_arrow.moveToBottom();
+      }
+      break;
     }
-    //hides temp_arrow if hovering over selected_circle
-    else {
-      temp_arrow.remove();
+
+    case modes.MARK.FINAL: {
+      if (end_circles[e.target.id()] == undefined) {
+        temp_final_subcircle = newFinalSubCircle(
+          e.target.getX(),
+          e.target.getY()
+        );
+        layer.add(temp_final_subcircle);
+        temp_final_subcircle.moveToBottom();
+      }
+      break;
+    }
+
+    //if adding new transition
+    case modes.INSERT.TRANSITION.TO: {
+      hovering = true;
+
+      //causes arrow to "snap" to the circle being hovered over
+      if (selected_circle != e.target) {
+        updateArrowPoints(temp_arrow, selected_circle, e.target);
+      }
+      //hides temp_arrow if hovering over selected_circle
+      else {
+        temp_arrow.remove();
+      }
+    }
+
+    default: {
+      e.target.radius(radius + 5);
     }
   }
 
@@ -599,8 +695,27 @@ function circleOutEvent(e) {
   if (mode == modes.INSERT.STATE) return;
 
   hovering = false;
-
   e.target.radius(radius);
+
+  switch (mode) {
+    case modes.MARK.INITIAL: {
+      if (temp_initial_arrow != null) {
+        temp_initial_arrow.destroy();
+        temp_initial_arrow = null;
+      }
+      break;
+    }
+
+    case modes.MARK.FINAL: {
+      if (temp_final_subcircle != null) {
+        temp_final_subcircle.destroy();
+        temp_final_subcircle = null;
+      }
+
+      break;
+    }
+  }
+
   layer.draw();
 }
 
@@ -678,6 +793,27 @@ function circleDragMoveEvent(e) {
     }
   });
   updateArrowPoints(temp_arrow, selected_circle, cur);
+
+  //redraws initial arrow and final subcircle if applicable
+  if (start_circles[id] != undefined) {
+    let temp = start_circles[id];
+    temp.setX(cur.getX());
+    temp.setY(cur.getY());
+  }
+  if (temp_initial_arrow != null) {
+    temp_initial_arrow.setX(cur.getX());
+    temp_initial_arrow.setY(cur.getY());
+  }
+
+  if (end_circles[id] != undefined) {
+    let temp = end_circles[id];
+    temp.setX(cur.getX());
+    temp.setY(cur.getY());
+  }
+  if (temp_final_subcircle != null) {
+    temp_final_subcircle.setX(cur.getX());
+    temp_final_subcircle.setY(cur.getY());
+  }
 
   layer.draw();
 }
@@ -849,6 +985,14 @@ document
 
 document.getElementById("remove").addEventListener("click", function () {
   changeMode(modes.REMOVE);
+});
+
+document.getElementById("mark_initial").addEventListener("click", function () {
+  changeMode(modes.MARK.INITIAL);
+});
+
+document.getElementById("mark_final").addEventListener("click", function () {
+  changeMode(modes.MARK.FINAL);
 });
 
 /*
