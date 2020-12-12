@@ -608,7 +608,8 @@ function circleMouseDownEvent(e) {
   if (
     mode == modes.SELECT ||
     mode == modes.INSERT.TRANSITION.TO ||
-    mode == modes.INSERT.TRANSITION.FROM
+    mode == modes.INSERT.TRANSITION.FROM ||
+    mode == modes.REMOVE
   ) {
     e.target.radius(radius);
     updateArrowPoints(temp_arrow, selected_circle, e.target);
@@ -621,7 +622,8 @@ function circleMouseUpEvent(e) {
   if (
     mode == modes.SELECT ||
     mode == modes.INSERT.TRANSITION.TO ||
-    mode == modes.INSERT.TRANSITION.FROM
+    mode == modes.INSERT.TRANSITION.FROM ||
+    mode == modes.REMOVE
   ) {
     e.target.radius(radius + 5);
     updateArrowPoints(temp_arrow, selected_circle, e.target);
