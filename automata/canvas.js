@@ -598,11 +598,30 @@ function circleOutEvent(e) {
 
   hovering = false;
 
-  if (mode == modes.INSERT.TRANSITION.TO) {
-  }
-
   e.target.radius(radius);
   layer.draw();
+}
+
+function circleMouseDownEvent(e) {
+  if (
+    mode == modes.SELECT ||
+    mode == modes.INSERT.TRANSITION.TO ||
+    mode == modes.INSERT.TRANSITION.FROM
+  ) {
+    e.target.radius(radius - 5);
+    layer.draw();
+  }
+}
+
+function circleMouseUpEvent(e) {
+  if (
+    mode == modes.SELECT ||
+    mode == modes.INSERT.TRANSITION.TO ||
+    mode == modes.INSERT.TRANSITION.FROM
+  ) {
+    e.target.radius(radius + 5);
+    layer.draw();
+  }
 }
 
 //redraws the arrows as circle moves
@@ -670,13 +689,14 @@ function newCircle(is_hover = false) {
     directed_in[circle.id()] = [];
     directed_out[circle.id()] = [];
     arrows[circle.id()] = {};
-  }
 
-  circle.on("mouseover", circleOverEvent);
-  circle.on("mouseout", circleOutEvent);
-  circle.on("mousedown", circleOutEvent);
-  circle.on("click", circleClickEvent);
-  circle.on("dragmove", circleDragMoveEvent);
+    circle.on("mouseover", circleOverEvent);
+    circle.on("mouseout", circleOutEvent);
+    circle.on("mousedown", circleMouseDownEvent);
+    circle.on("mouseup", circleMouseUpEvent);
+    circle.on("click", circleClickEvent);
+    circle.on("dragmove", circleDragMoveEvent);
+  }
 
   return circle;
 }
