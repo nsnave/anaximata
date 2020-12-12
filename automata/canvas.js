@@ -154,9 +154,75 @@ function calcPoints(x1, y1, x2, y2, r1, r2) {
   return p;
 }
 
+//remove element from data structures functions
+//removes an arrow
+function removeArrow(arrow) {
+  let c = circles[arrow.id()];
+
+  delete circles[arrow.id()];
+  delete arrows[c.out.id()][c.in.id()];
+
+  let index = directed_in[c.in.id()].indexOf(c.out.id());
+  directed_in[c.in.id()].splice(index, 1);
+
+  index = directed_out[c.out.id()].indexOf(c.in.id());
+  directed_out[c.out.id()].splice(index, 1);
+}
+
+//removes a circle and destroys the associated arrows
+function removeCircle(circle) {
+  let in_circles = directed_in[circle.id()];
+  let out_circles = directed_out[circle.id()];
+
+  in_circles.forEach(function (other, n) {
+    if (directed_out[other.id()] != undefined) {
+      let index = directed_out[other.id()].indexOf(circle.id());
+      directed_out[other.id()].splice(index, 1);
+    }
+
+    if (arrows[other.id()] != undefined) {
+      let arrow = arrows[other.id()][circle.id()];
+      if (arrow != undefined) {
+        delete circles[arrow.id()];
+        arrow.destroy();
+      }
+      delete arrows[other.id()][circle.id()];
+    }
+  });
+
+  out_circles.forEach(function (other, n) {
+    if (directed_in[other.id()] != undefined) {
+      let index = directed_in[other.id()].indexOf(circle.id());
+      directed_in[other.id()].splice(index, 1);
+    }
+
+    if (arrows[circle.id()] != undefined) {
+      let arrow = arrows[circle.id()][other.id()];
+      if (arrow != undefined) {
+        delete circles[arrow.id()];
+        arrow.destroy();
+      }
+      delete arrows[circle.id()][other.id()];
+    }
+  });
+
+  delete directed_in[circle.id()];
+  delete directed_out[circle.id()];
+  delete arrows[circle.id()];
+}
+
 //arrow event functions
 function arrowClickEvent(e) {
   if (mode == modes.REMOVE) {
+    /*
+    console.log(JSON.stringify(circles));
+    console.log(JSON.stringify(arrows));
+    console.log(JSON.stringify(directed_in));
+    console.log(JSON.stringify(directed_out));
+    console.log("");
+    */
+
+    removeArrow(e.target);
     e.target.destroy();
 
     layer.draw();
@@ -215,6 +281,8 @@ function selfArrowAngle(mouse_x, mouse_y, circle_x, circle_y) {
 //self-arrow event functions
 function selfArrowClickEvent(e) {
   if (mode == modes.REMOVE) {
+    removeArrow(e.target.parent);
+
     e.target.parent.destroy();
 
     layer.draw();
@@ -222,7 +290,11 @@ function selfArrowClickEvent(e) {
 }
 
 function selfArrowOverEvent(e) {
-  if (mode == modes.SELECT || mode == modes.REMOVE) {
+  if (
+    mode == modes.SELECT ||
+    mode == modes.REMOVE ||
+    mode == modes.INSERT.TRANSITION.FROM
+  ) {
     let children = e.target.parent.getChildren();
     children.each(function (child, n) {
       child.strokeWidth(arrow_width + 3);
@@ -283,13 +355,22 @@ function newSelfArrow(x, y) {
     name: "self-arrow",
   });
 
+  let overlay = new Konva.Circle({
+    x: x_val,
+    y: y_val,
+    radius: self_arrow_radius,
+    name: "self-arrow",
+  });
+
   let group = new Konva.Group({
     x: x,
     y: y,
     draggable: true,
+    name: "self-arrow",
   });
   group.add(arc);
   group.add(tip);
+  group.add(overlay);
 
   group.on("mouseover", selfArrowOverEvent);
   group.on("mouseout", selfArrowOutEvent);
@@ -381,6 +462,7 @@ function circleClickEvent(e) {
       let y = e.target.getY();
       temp_self_arrow = newSelfArrow(x, y);
       layer.add(temp_self_arrow);
+      temp_self_arrow.moveToBottom();
 
       hovering = true;
       self_hovering = true;
@@ -429,14 +511,23 @@ function circleClickEvent(e) {
       temp_arrow = null;
       temp_self_arrow = null;
 
-      //assings arrow an id
-      arrow.setAttr("id", arrow_ids++);
+      //checks if new transition already exists
+      if (
+        arrows[out_circle.id()] != undefined &&
+        arrows[out_circle.id()][in_circle.id()] != undefined
+      ) {
+        arrow.destroy();
+      } else {
+        //assings arrow an id
+        arrow.setAttr("id", arrow_ids++);
+        console.log(arrow_ids - 1);
 
-      //adds circles and arrow to the adjaceny lists
-      directed_out[out_circle.id()].push(in_circle);
-      directed_in[in_circle.id()].push(out_circle);
-      arrows[out_circle.id()][in_circle.id()] = arrow;
-      circles[arrow.id()] = { out: out_circle, in: in_circle };
+        //adds circles and arrow to the adjaceny lists
+        directed_out[out_circle.id()].push(in_circle);
+        directed_in[in_circle.id()].push(out_circle);
+        arrows[out_circle.id()][in_circle.id()] = arrow;
+        circles[arrow.id()] = { out: out_circle, in: in_circle };
+      }
 
       layer.draw();
 
@@ -447,6 +538,17 @@ function circleClickEvent(e) {
 
     //removes element
     case modes.REMOVE: {
+      console.log(JSON.stringify(circles));
+      console.log(JSON.stringify(arrows));
+      console.log(JSON.stringify(directed_in));
+      console.log(JSON.stringify(directed_out));
+      console.log("");
+      removeCircle(e.target);
+      console.log(JSON.stringify(circles));
+      console.log(JSON.stringify(arrows));
+      console.log(JSON.stringify(directed_in));
+      console.log(JSON.stringify(directed_out));
+      console.log("");
       e.target.destroy();
 
       layer.draw();
@@ -465,7 +567,7 @@ function circleOverEvent(e) {
   if (mode == modes.INSERT.TRANSITION.TO) {
     hovering = true;
 
-    //causes arrow to "stick" to circle being hovered over
+    //causes arrow to "snap" to the circle being hovered over
     if (selected_circle != e.target) {
       let points = calcPoints(
         selected_circle.getX(),
@@ -545,7 +647,7 @@ function circleDragMoveEvent(e) {
 }
 
 //generates a new circle at the current mouse position
-function newCircle() {
+function newCircle(is_hover = false) {
   var coords = getCoords();
 
   var circle = new Konva.Circle({
@@ -555,13 +657,16 @@ function newCircle() {
     stroke: stroke_color,
     strokeWidth: circle_width,
     draggable: true,
-    id: circle_ids++,
     name: "circle",
   });
 
-  directed_in[circle.id()] = [];
-  directed_out[circle.id()] = [];
-  arrows[circle.id()] = {};
+  if (!is_hover) {
+    circle.setAttr("id", circle_ids++);
+
+    directed_in[circle.id()] = [];
+    directed_out[circle.id()] = [];
+    arrows[circle.id()] = {};
+  }
 
   circle.on("mouseover", circleOverEvent);
   circle.on("mouseout", circleOutEvent);
@@ -587,7 +692,7 @@ var hover_circle;
 
 stage.on("mouseenter", function () {
   if (mode == modes.INSERT.STATE) {
-    hover_circle = newCircle();
+    hover_circle = newCircle(true);
 
     layer.add(hover_circle);
     layer.draw();
@@ -644,6 +749,7 @@ stage.on("mousemove", function () {
       if (self_hovering == false) {
         temp_arrow.remove();
         layer.add(temp_self_arrow);
+        temp_self_arrow.moveToBottom();
 
         self_hovering = true;
         return;
@@ -651,7 +757,7 @@ stage.on("mousemove", function () {
     } else if (self_hovering == true) {
       temp_self_arrow.remove();
       layer.add(temp_arrow);
-
+      console.log("here");
       self_hovering = false;
       return;
     }
