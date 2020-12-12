@@ -162,10 +162,10 @@ function removeArrow(arrow) {
   delete circles[arrow.id()];
   delete arrows[c.out.id()][c.in.id()];
 
-  let index = directed_in[c.in.id()].indexOf(c.out.id());
+  let index = directed_in[c.in.id()].indexOf(c.out);
   directed_in[c.in.id()].splice(index, 1);
 
-  index = directed_out[c.out.id()].indexOf(c.in.id());
+  index = directed_out[c.out.id()].indexOf(c.in);
   directed_out[c.out.id()].splice(index, 1);
 }
 
@@ -174,9 +174,12 @@ function removeCircle(circle) {
   let in_circles = directed_in[circle.id()];
   let out_circles = directed_out[circle.id()];
 
+  console.log("circle: " + circle.id());
+
   in_circles.forEach(function (other, n) {
+    console.log("in_circle: " + other.id());
     if (directed_out[other.id()] != undefined) {
-      let index = directed_out[other.id()].indexOf(circle.id());
+      let index = directed_out[other.id()].indexOf(circle);
       directed_out[other.id()].splice(index, 1);
     }
 
@@ -191,8 +194,9 @@ function removeCircle(circle) {
   });
 
   out_circles.forEach(function (other, n) {
+    console.log("out_circle: " + other.id());
     if (directed_in[other.id()] != undefined) {
-      let index = directed_in[other.id()].indexOf(circle.id());
+      let index = directed_in[other.id()].indexOf(circle);
       directed_in[other.id()].splice(index, 1);
     }
 
