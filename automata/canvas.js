@@ -174,10 +174,7 @@ function removeCircle(circle) {
   let in_circles = directed_in[circle.id()];
   let out_circles = directed_out[circle.id()];
 
-  console.log("circle: " + circle.id());
-
   in_circles.forEach(function (other, n) {
-    console.log("in_circle: " + other.id());
     if (directed_out[other.id()] != undefined) {
       let index = directed_out[other.id()].indexOf(circle);
       directed_out[other.id()].splice(index, 1);
@@ -194,7 +191,6 @@ function removeCircle(circle) {
   });
 
   out_circles.forEach(function (other, n) {
-    console.log("out_circle: " + other.id());
     if (directed_in[other.id()] != undefined) {
       let index = directed_in[other.id()].indexOf(circle);
       directed_in[other.id()].splice(index, 1);
@@ -428,7 +424,6 @@ function changeMode(new_mode) {
       layer.draw();
     }
     if (temp_self_arrow != null) {
-      console.log("destoryed temp_self_arrow");
       temp_self_arrow.destroy();
       temp_self_arrow = null;
       layer.draw();
@@ -436,6 +431,20 @@ function changeMode(new_mode) {
   }
 
   mode = new_mode;
+}
+
+function updateArrowPoints(arrow, circle1, circle2) {
+  if (arrow != null) {
+    let p = calcPoints(
+      circle1.getX(),
+      circle1.getY(),
+      circle2.getX(),
+      circle2.getY(),
+      circle1.radius(),
+      circle2.radius()
+    );
+    arrow.setPoints(p);
+  }
 }
 
 //circle event functions
@@ -524,7 +533,6 @@ function circleClickEvent(e) {
       } else {
         //assings arrow an id
         arrow.setAttr("id", arrow_ids++);
-        console.log(arrow_ids - 1);
 
         //adds circles and arrow to the adjaceny lists
         directed_out[out_circle.id()].push(in_circle);
@@ -542,17 +550,21 @@ function circleClickEvent(e) {
 
     //removes element
     case modes.REMOVE: {
+      /*
       console.log(JSON.stringify(circles));
       console.log(JSON.stringify(arrows));
       console.log(JSON.stringify(directed_in));
       console.log(JSON.stringify(directed_out));
       console.log("");
+      */
       removeCircle(e.target);
+      /*
       console.log(JSON.stringify(circles));
       console.log(JSON.stringify(arrows));
       console.log(JSON.stringify(directed_in));
       console.log(JSON.stringify(directed_out));
       console.log("");
+      */
       e.target.destroy();
 
       layer.draw();
@@ -565,7 +577,6 @@ function circleOverEvent(e) {
   if (mode == modes.INSERT.STATE) return;
 
   e.target.radius(radius + 5);
-  layer.draw();
 
   //if adding new transition
   if (mode == modes.INSERT.TRANSITION.TO) {
@@ -573,24 +584,15 @@ function circleOverEvent(e) {
 
     //causes arrow to "snap" to the circle being hovered over
     if (selected_circle != e.target) {
-      let points = calcPoints(
-        selected_circle.getX(),
-        selected_circle.getY(),
-        e.target.getX(),
-        e.target.getY(),
-        radius,
-        radius + 5
-      );
-
-      temp_arrow.setPoints(points);
+      updateArrowPoints(temp_arrow, selected_circle, e.target);
     }
     //hides temp_arrow if hovering over selected_circle
     else {
       temp_arrow.remove();
     }
-
-    layer.draw();
   }
+
+  layer.draw();
 }
 
 function circleOutEvent(e) {
@@ -608,7 +610,9 @@ function circleMouseDownEvent(e) {
     mode == modes.INSERT.TRANSITION.TO ||
     mode == modes.INSERT.TRANSITION.FROM
   ) {
-    e.target.radius(radius - 5);
+    e.target.radius(radius);
+    updateArrowPoints(temp_arrow, selected_circle, e.target);
+
     layer.draw();
   }
 }
@@ -620,6 +624,8 @@ function circleMouseUpEvent(e) {
     mode == modes.INSERT.TRANSITION.FROM
   ) {
     e.target.radius(radius + 5);
+    updateArrowPoints(temp_arrow, selected_circle, e.target);
+
     layer.draw();
   }
 }
@@ -634,6 +640,10 @@ function circleDragMoveEvent(e) {
   if (self_arrow != undefined) {
     self_arrow.setX(cur.getX());
     self_arrow.setY(cur.getY());
+  }
+  if (temp_self_arrow != null && cur == selected_circle) {
+    temp_self_arrow.setX(cur.getX());
+    temp_self_arrow.setY(cur.getY());
   }
 
   //redraws arrows directed out of circle
@@ -665,6 +675,7 @@ function circleDragMoveEvent(e) {
       arrows[other.id()][id].setPoints(p);
     }
   });
+  updateArrowPoints(temp_arrow, selected_circle, cur);
 
   layer.draw();
 }
@@ -781,7 +792,7 @@ stage.on("mousemove", function () {
     } else if (self_hovering == true) {
       temp_self_arrow.remove();
       layer.add(temp_arrow);
-      console.log("here");
+
       self_hovering = false;
       return;
     }
