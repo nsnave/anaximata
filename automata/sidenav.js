@@ -75,11 +75,30 @@ function closeRightNav() {
   btn.innerHTML = "&laquo";
 }
 
+function changeRightOpenWidth(new_right) {
+  if (right_open) {
+    right_open_width = new_right;
+
+    document.getElementById("rightdivider").style.transition = "0s";
+    document.getElementById("rightsidenav").style.transition = "0s";
+    document.getElementById("canvas").style.transition = "0s";
+
+    document.getElementById("rightdivider").style.right = new_right + "px";
+    document.getElementById("rightsidenav").style.width = new_right + "px";
+    document.getElementById("canvas").style.marginRight = new_right + "px";
+  }
+}
+
 window.addEventListener("resize", function () {
   if (
-    window.innerWidth < left_open_width + right_open_width &&
     left_open &&
-    right_open
+    right_open &&
+    window.innerWidth < left_open_width + right_open_width
   )
     closeLeftNav();
+
+  if (right_open && right_open_width > window.innerWidth - 32) {
+    let new_right = window.innerWidth - 32;
+    changeRightOpenWidth(new_right);
+  }
 });
