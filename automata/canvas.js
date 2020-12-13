@@ -71,12 +71,18 @@ function updateStageSize() {
 window.addEventListener("resize", updateStageSize);
 
 //keeps track of canvas size within side menus
-function updateStageOffsets() {
-  stage_left_offset = document.getElementById("settings").offsetWidth;
-  stage_right_offset = document.getElementById("display").offsetWidth;
+function updateStageOffsets(
+  left = document.getElementById("leftsidenav").offsetWidth,
+  right = document.getElementById("rightsidenav").offsetWidth
+) {
+  stage_left_offset = left;
+  stage_right_offset = right;
   updateStageSize();
 }
-window.addEventListener("transitionend", updateStageOffsets);
+window.addEventListener("transitionend", function () {
+  updateStageOffsets();
+  console.log("done");
+});
 
 //handles zooming via scroll on desktop
 //  initial src: https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html

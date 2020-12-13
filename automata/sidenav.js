@@ -1,13 +1,22 @@
 let left_open = true;
 let right_open = false;
-let right_width = 32;
+let left_open_width = 250;
+let right_open_width = 250;
+
+function resetTransitionSpeeds() {
+  document.getElementById("rightdivider").style.transition = "0.5s";
+  document.getElementById("rightsidenav").style.transition = "0.5s";
+  document.getElementById("canvas").style.transition = "0.5s";
+}
 
 function openLeftNav() {
-  if (window.innerWidth < 500) closeRightNav();
+  if (window.innerWidth < left_open_width + right_open_width) closeRightNav();
 
   left_open = true;
 
-  document.getElementById("settings").style.width = "250px";
+  resetTransitionSpeeds();
+
+  document.getElementById("leftsidenav").style.width = "250px";
   document.getElementById("canvas").style.marginLeft = "250px";
 
   var btn = document.getElementById("leftnavbtn");
@@ -18,7 +27,10 @@ function openLeftNav() {
 function closeLeftNav() {
   left_open = false;
 
-  document.getElementById("settings").style.width = "32px";
+  updateStageOffsets(32, undefined);
+  resetTransitionSpeeds();
+
+  document.getElementById("leftsidenav").style.width = "32px";
   document.getElementById("canvas").style.marginLeft = "32px";
 
   var btn = document.getElementById("leftnavbtn");
@@ -27,15 +39,18 @@ function closeLeftNav() {
 }
 
 function openRightNav() {
-  if (window.innerWidth < 500) closeLeftNav();
+  if (window.innerWidth < left_open_width + right_open_width) closeLeftNav();
 
   right_open = true;
 
-  document.getElementById("display").style.width = "250px";
-  document.getElementById("canvas").style.marginRight = "250px";
+  resetTransitionSpeeds();
+
+  document.getElementById("rightsidenav").style.width = right_open_width + "px";
+  document.getElementById("canvas").style.marginRight = right_open_width + "px";
 
   let div = document.getElementById("rightdivider").style;
-  div.width = 0;
+  div.width = "3px";
+  div.right = right_open_width + "px";
 
   var btn = document.getElementById("rightnavbtn");
   btn.setAttribute("onClick", "closeRightNav()");
@@ -45,8 +60,15 @@ function openRightNav() {
 function closeRightNav() {
   right_open = false;
 
-  document.getElementById("display").style.width = "32px";
+  updateStageOffsets(undefined, 32);
+  resetTransitionSpeeds();
+
+  document.getElementById("rightsidenav").style.width = "32px";
   document.getElementById("canvas").style.marginRight = "32px";
+
+  let div = document.getElementById("rightdivider").style;
+  div.width = 0;
+  div.right = "32px";
 
   var btn = document.getElementById("rightnavbtn");
   btn.setAttribute("onClick", "openRightNav()");
@@ -54,15 +76,10 @@ function closeRightNav() {
 }
 
 window.addEventListener("resize", function () {
-  if (window.innerWidth < 500 && left_open && right_open) closeLeftNav();
+  if (
+    window.innerWidth < left_open_width + right_open_width &&
+    left_open &&
+    right_open
+  )
+    closeLeftNav();
 });
-/*
-//handles resizing the right sidenav
-document.getElementById("rightdivider").onmousedown = dividerMouseDown;
-
-function dividerMouseDown(e) {}
-
-function dividerMouseMove(e) {}
-
-function dividerMouseUp(e) {}
-*/
