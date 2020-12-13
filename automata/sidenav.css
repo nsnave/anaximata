@@ -1,11 +1,9 @@
 /* The side navigation menu */
 .sidenav {
   height: 100%;
-  width: 250px;
   position: fixed; /* stay in place */
   z-index: 1; /* stay on top */
   top: 0;
-  left: 0;
   background-color: rgb(17, 17, 17);
   overflow-x: hidden; /* disable horizontal scroll */
   padding-top: 60px;
@@ -30,19 +28,28 @@
 
 /* Position and style the close button (top right corner) */
 .sidenav .sidenavbtn {
+  padding: 8px 8px 8px 8px;
   position: absolute;
   top: 0;
-  right: 0;
   font-size: 36px;
-  margin-left: 50px;
+}
+
+.vdivider {
+  height: 100%;
+  width: 3px;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  right: 32px;
+  background-color: rgba(255, 255, 255, 0);
+  transition: 0.5s;
+}
+
+.vdivider:hover {
+  cursor: ew-resize;
 }
 
 /* Style page content - use this if you want to push the page content to the right when you open the side navigation */
-#canvas {
-  margin-left: 250px;
-  transition: margin-left 0.5s;
-  padding: 0px;
-}
 
 /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
 /*

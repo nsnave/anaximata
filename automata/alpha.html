@@ -10,17 +10,11 @@
         overflow: hidden;
         background-color: #f0f0f0;
       }
-
-      #buttons {
-        position: absolute;
-        top: 5px;
-        left: 10px;
-      }
-
-      #buttons > input {
-        padding: 10px;
-        display: block;
-        margin-top: 5px;
+      #canvas {
+        margin-left: 250px;
+        margin-right: 32px;
+        transition: 0.5s;
+        padding: 0px;
       }
     </style>
     <link rel="stylesheet" type="text/css" href="sidenav.css" />
@@ -29,11 +23,12 @@
     <script type="text/javascript" src="sidenav.js"></script>
 
     <!-- Settings Menu -->
-    <div id="settings" class="sidenav">
+    <div id="settings" class="sidenav" style="width: 250px; left: 0">
       <a
         id="leftnavbtn"
         href="javascript:void(0)"
         class="sidenavbtn"
+        style="right: 0"
         onclick="closeLeftNav()"
         >&laquo;</a
       >
@@ -43,6 +38,19 @@
       <a id="remove">Remove</a>
       <a id="mark_initial">Mark Initial</a>
       <a id="mark_final">Mark Final</a>
+    </div>
+
+    <div id="rightdivider" class="vdivider"></div>
+
+    <div id="display" class="sidenav" style="width: 32px; right: 0">
+      <a
+        id="rightnavbtn"
+        href="javascript:void(0)"
+        class="sidenavbtn"
+        style="left: 0"
+        onclick="openRightNav()"
+        >&laquo;</a
+      >
     </div>
 
     <div id="canvas"></div>

@@ -53,7 +53,7 @@ const end_circles = {}; //(circle.id) -> final sub-circle
 
 //stage constants
 let stage_left_offset = 250;
-let stage_right_offset = 0;
+let stage_right_offset = 32;
 
 const stage = new Konva.Stage({
   container: "canvas",
@@ -61,8 +61,22 @@ const stage = new Konva.Stage({
   height: window.innerHeight,
   draggable: true,
 });
-
 const layer = new Konva.Layer();
+
+//makes canvas fit to window
+function updateStageSize() {
+  stage.width(window.innerWidth - stage_left_offset - stage_right_offset);
+  stage.height(window.innerHeight);
+}
+window.addEventListener("resize", updateStageSize);
+
+//keeps track of canvas size within side menus
+function updateStageOffsets() {
+  stage_left_offset = document.getElementById("settings").offsetWidth;
+  stage_right_offset = document.getElementById("display").offsetWidth;
+  updateStageSize();
+}
+window.addEventListener("transitionend", updateStageOffsets);
 
 //handles zooming via scroll on desktop
 //  initial src: https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html
@@ -89,20 +103,6 @@ stage.on("wheel", (e) => {
   stage.position(newPos);
   stage.batchDraw();
 });
-
-//makes canvas fit to window
-function updateStageSize() {
-  stage.width(window.innerWidth - stage_left_offset - stage_right_offset);
-  stage.height(window.innerHeight);
-}
-window.addEventListener("resize", updateStageSize);
-
-//keeps track of canvas size within side menus
-function updateStageOffsets() {
-  stage_left_offset = document.getElementById("settings").offsetWidth;
-  updateStageSize();
-}
-window.addEventListener("transitionend", updateStageOffsets);
 
 //generates and returns a random color
 //  src: https://stackoverflow.com/a/1484514/11039508
@@ -429,6 +429,27 @@ function updateArrowPoints(arrow, circle1, circle2) {
   }
 }
 
+//initial-arrow angle function
+//  returns the proper angle for the arrow
+//    given mouse location and circle location
+function initialArrowAngle(mouse_x, mouse_y, circle_x, circle_y) {
+  let x = mouse_x - circle_x;
+  let y = mouse_y - circle_y;
+
+  if (x == 0 && y == 0) return;
+
+  let theta = Math.atan(y / x) * (180 / Math.PI);
+
+  if (x >= 0) theta += 180;
+  if (theta < 0) theta += 360;
+
+  let sector_size = 15;
+  theta += sector_size / 2;
+  theta -= theta % sector_size;
+
+  return theta;
+}
+
 //creates a new initial arrow pointing to (x, y)
 function newInitialArrow(x, y) {
   let shared_offset = -radius - circle_width - 5;
@@ -472,6 +493,7 @@ function newFinalSubCircle(x, y) {
 //variables for circle events
 let from_circle;
 let selected_circle = null;
+let over_circle = null;
 let hovering = false;
 let self_hovering = false;
 let temp_arrow = null;
@@ -481,6 +503,7 @@ let temp_final_subcircle = null;
 
 //handles changing the mode for circles
 function changeMode(new_mode) {
+  //console.log(new_mode);
   if (mode == modes.SELECT) {
     if (selected_circle != null) {
       selected_circle.stroke(stroke_color);
@@ -489,6 +512,8 @@ function changeMode(new_mode) {
 
       layer.draw();
     }
+  } else if (mode == modes.MARK.INITIAL) {
+    over_circle = null;
   }
 
   if (mode != modes.INSERT.TRANSITION.FROM) {
@@ -635,7 +660,11 @@ function circleClickEvent(e) {
       if (start_circles[e.target.id()] == undefined) {
         start_circles[e.target.id()] = temp_initial_arrow;
         temp_initial_arrow = null;
+      } else {
+        start_circles[e.target.id()].destroy();
+        delete start_circles[e.target.id()];
       }
+      layer.draw();
       break;
     }
 
@@ -643,7 +672,11 @@ function circleClickEvent(e) {
       if (end_circles[e.target.id()] == undefined) {
         end_circles[e.target.id()] = temp_final_subcircle;
         temp_final_subcircle = null;
+      } else {
+        end_circles[e.target.id()].destroy();
+        delete end_circles[e.target.id()];
       }
+      layer.draw();
       break;
     }
   }
@@ -655,6 +688,7 @@ function circleOverEvent(e) {
   switch (mode) {
     case modes.MARK.INITIAL: {
       if (start_circles[e.target.id()] == undefined) {
+        over_circle = e.target;
         temp_initial_arrow = newInitialArrow(e.target.getX(), e.target.getY());
         layer.add(temp_initial_arrow);
         temp_initial_arrow.moveToBottom();
@@ -686,11 +720,13 @@ function circleOverEvent(e) {
       else {
         temp_arrow.remove();
       }
-    }
 
-    default: {
-      e.target.radius(radius + 5);
+      break;
     }
+  }
+
+  if (mode != modes.MARK.INITIAL && mode != modes.MARK.FINAL) {
+    e.target.radius(radius + 5);
   }
 
   layer.draw();
@@ -705,6 +741,7 @@ function circleOutEvent(e) {
   switch (mode) {
     case modes.MARK.INITIAL: {
       if (temp_initial_arrow != null) {
+        over_circle = null;
         temp_initial_arrow.destroy();
         temp_initial_arrow = null;
       }
@@ -887,70 +924,90 @@ stage.on("mouseleave", function () {
 });
 
 stage.on("mousemove", function () {
-  //has hover_circle follow mouse
-  if (mode == modes.INSERT.STATE) {
-    let coords = getCoords();
+  switch (mode) {
+    //has hover_circle follow mouse
+    case modes.INSERT.STATE: {
+      let coords = getCoords();
 
-    hover_circle.x(coords.x);
-    hover_circle.y(coords.y);
-
-    layer.draw();
-  }
-  //adjusts arrow accordingly if currently inserting a transition
-  else if (mode == modes.INSERT.TRANSITION.TO) {
-    let coords = getCoords();
-    let circle_coords = {
-      x: selected_circle.getX(),
-      y: selected_circle.getY(),
-    };
-
-    if (hovering == false) {
-      let points = calcPoints(
-        circle_coords.x,
-        circle_coords.y,
-        coords.x,
-        coords.y,
-        radius,
-        0
-      );
-
-      temp_arrow.setPoints(points);
-      layer.add(temp_arrow);
+      hover_circle.x(coords.x);
+      hover_circle.y(coords.y);
 
       layer.draw();
+      break;
     }
+    //adjusts arrow accordingly if currently inserting a transition
+    case modes.INSERT.TRANSITION.TO: {
+      let coords = getCoords();
+      let circle_coords = {
+        x: selected_circle.getX(),
+        y: selected_circle.getY(),
+      };
 
-    //determines if mouse is hovering over selected_circle
-    //  (i.e., if self_hover == true)
-    let dist = distance(circle_coords.x, circle_coords.y, coords.x, coords.y);
-    if (dist <= radius + circle_width) {
-      if (self_hovering == false) {
-        temp_arrow.remove();
-        layer.add(temp_self_arrow);
-        temp_self_arrow.moveToBottom();
+      if (hovering == false) {
+        let points = calcPoints(
+          circle_coords.x,
+          circle_coords.y,
+          coords.x,
+          coords.y,
+          radius,
+          0
+        );
 
-        self_hovering = true;
+        temp_arrow.setPoints(points);
+        layer.add(temp_arrow);
+
+        layer.draw();
+      }
+
+      //determines if mouse is hovering over selected_circle
+      //  (i.e., if self_hover == true)
+      let dist = distance(circle_coords.x, circle_coords.y, coords.x, coords.y);
+      if (dist <= radius + circle_width) {
+        if (self_hovering == false) {
+          temp_arrow.remove();
+          layer.add(temp_self_arrow);
+          temp_self_arrow.moveToBottom();
+
+          self_hovering = true;
+          return;
+        }
+      } else if (self_hovering == true) {
+        temp_self_arrow.remove();
+        layer.add(temp_arrow);
+
+        self_hovering = false;
         return;
       }
-    } else if (self_hovering == true) {
-      temp_self_arrow.remove();
-      layer.add(temp_arrow);
 
-      self_hovering = false;
-      return;
+      //rotates self_circle appropriately
+      if (self_hovering == true) {
+        let theta = selfArrowAngle(
+          coords.x,
+          coords.y,
+          circle_coords.x,
+          circle_coords.y
+        );
+
+        temp_self_arrow.rotation(theta);
+        layer.draw();
+      }
+      break;
     }
 
-    //rotates self_circle appropriately
-    if (self_hovering == true) {
-      let theta = selfArrowAngle(
-        coords.x,
-        coords.y,
-        circle_coords.x,
-        circle_coords.y
-      );
-
-      temp_self_arrow.rotation(theta);
-      layer.draw();
+    case modes.MARK.INITIAL: {
+      if (temp_initial_arrow != null && over_circle != null) {
+        let coords = getCoords();
+        temp_initial_arrow.rotation(
+          initialArrowAngle(
+            coords.x,
+            coords.y,
+            over_circle.getX(),
+            over_circle.getY()
+          )
+        );
+        layer.draw();
+      }
+      break;
     }
   }
 });
