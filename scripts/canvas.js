@@ -56,10 +56,13 @@ const end_circles = {}; //(circle.id) -> final sub-circle
 let stage_left_offset = 250;
 let stage_right_offset = 32;
 
+let stage_top_offset = 0;
+let stage_bottom_offset = 0;
+
 const stage = new Konva.Stage({
   container: "canvas",
   width: window.innerWidth - stage_left_offset - stage_right_offset,
-  height: window.innerHeight,
+  height: window.innerHeight - stage_top_offset - stage_bottom_offset,
   draggable: true,
 });
 const layer = new Konva.Layer();
@@ -67,17 +70,23 @@ const layer = new Konva.Layer();
 //makes canvas fit to window
 function updateStageSize() {
   stage.width(window.innerWidth - stage_left_offset - stage_right_offset);
-  stage.height(window.innerHeight);
+  stage.height(window.innerHeight - stage_top_offset - stage_bottom_offset);
 }
 window.addEventListener("resize", updateStageSize);
 
 //keeps track of canvas size within side menus
 function updateStageOffsets(
   left = document.getElementById("leftsidenav").offsetWidth,
-  right = document.getElementById("rightsidenav").offsetWidth
+  right = document.getElementById("rightsidenav").offsetWidth,
+  top = document.getElementById("navbar").offsetHeight,
+  bottom = document.getElementById("canvasbar").offsetHeight
 ) {
   stage_left_offset = left;
   stage_right_offset = right;
+
+  stage_top_offset = top;
+  stage_bottom_offset = bottom;
+
   updateStageSize();
 }
 window.addEventListener("transitionend", function () {
@@ -87,7 +96,7 @@ window.addEventListener("transitionend", function () {
 //displays current data structures in right sidenav display
 function updateDisplay() {
   let display = document.getElementById("display");
-  display.textContent = "Number of States: " + countProperties(circles);
+  //display.textContent = "Number of States: " + countProperties(circles);
 }
 
 //handles zooming via scroll on desktop
