@@ -18,8 +18,11 @@
       }
     </style>
     <link rel="stylesheet" type="text/css" href="sidenav.css" />
+    <link rel="stylesheet" type="text/css" href="display.css" />
   </head>
   <body>
+    <script type="text/javascript" src="utilities.js"></script>
+
     <!-- Settings Menu -->
     <div id="leftsidenav" class="sidenav" style="width: 250px; left: 0">
       <a
@@ -49,6 +52,22 @@
         onclick="openRightNav()"
         >&laquo;</a
       >
+      <div id="display">
+        <button class="accordion">Section 1</button>
+        <div class="panel">
+          <p>Lorem ipsum...</p>
+        </div>
+
+        <button class="accordion">Section 2</button>
+        <div class="panel">
+          <p>Lorem ipsum...</p>
+        </div>
+
+        <button class="accordion">Section 3</button>
+        <div class="panel">
+          <p>Lorem ipsum...</p>
+        </div>
+      </div>
     </div>
 
     <div id="canvas"></div>
@@ -56,5 +75,6 @@
 
     <script type="text/javascript" src="sidenav.js"></script>
     <script type="text/javascript" src="divider.js"></script>
+    <script type="text/javascript" src="display.js"></script>
   </body>
 </html>

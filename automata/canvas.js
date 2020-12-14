@@ -44,6 +44,7 @@ const pointer_width = 10;
 const initial_arrow_length = radius;
 
 //adjacency lists, etc.
+const all_circles = {};
 const directed_in = {}; //(circle.id) -> [circles that point to circle]
 const directed_out = {}; //(circle.id) -> [circles that circle points to]
 const arrows = {}; //(circle1.id, circle2.id) -> arrow that points connects circle1 and circle2
@@ -84,6 +85,12 @@ window.addEventListener("transitionend", function () {
   console.log("done");
 });
 
+//displays current data structures in right sidenav display
+function updateDisplay() {
+  let display = document.getElementById("display");
+  display.textContent = "Number of States: " + countProperties(circles);
+}
+
 //handles zooming via scroll on desktop
 //  initial src: https://konvajs.org/docs/sandbox/Zooming_Relative_To_Pointer.html
 const scaleBy = 0.94;
@@ -110,17 +117,6 @@ stage.on("wheel", (e) => {
   stage.batchDraw();
 });
 
-//generates and returns a random color
-//  src: https://stackoverflow.com/a/1484514/11039508
-function getRandomColor() {
-  var letters = "0123456789ABCDEF";
-  var color = "#";
-  for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
-  return color;
-}
-
 //gets the coordinates of the mouse relative to the stage
 function getCoords() {
   var oldScale = stage.scaleX();
@@ -132,13 +128,6 @@ function getCoords() {
   };
 
   return coords;
-}
-
-//calculates distance between two points
-function distance(x1, y1, x2, y2) {
-  let x = x2 - x1;
-  let y = y2 - y1;
-  return Math.sqrt(x * x + y * y);
 }
 
 //calculates the start and end points for a line connecting two circles
@@ -686,6 +675,8 @@ function circleClickEvent(e) {
       break;
     }
   }
+
+  updateDisplay();
 }
 
 function circleOverEvent(e) {
