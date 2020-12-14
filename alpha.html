@@ -1,20 +1,18 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Arrow Calculations</title>
+    <title>Anaximata</title>
+
+    <!-- Konva Library for Canvas Graphics -->
     <script type="text/javascript" src="lib/konva.min.js"></script>
+
+    <!-- CSS -->
     <style>
       body {
         margin: 0;
         padding: 0;
         overflow: hidden;
         background-color: #f0f0f0;
-      }
-      #canvas {
-        margin-left: 250px;
-        margin-right: 32px;
-        transition: 0.5s;
-        padding: 0px;
       }
       .freeze {
         -webkit-touch-callout: none;
@@ -25,14 +23,19 @@
         user-select: none;
       }
     </style>
+
+    <!-- CSS Linked Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="css/graphics.css" />
+
     <link rel="stylesheet" type="text/css" href="css/sidenav.css" />
     <link rel="stylesheet" type="text/css" href="css/options.css" />
     <link rel="stylesheet" type="text/css" href="css/display.css" />
   </head>
   <body>
-    <script type="text/javascript" src="scripts/utilities.js"></script>
+    <!-- Navigation Bar; Top Section -->
+    <div id="navbar"></div>
 
-    <!-- Settings Menu -->
+    <!-- Options Menu; Left Section -->
     <div id="leftsidenav" class="sidenav" style="width: 250px; left: 0">
       <a
         id="leftnavbtn"
@@ -50,6 +53,7 @@
         </select>
         <br /><br /><br />
 
+        <!-- Transition Diagram Options -->
         <div id="automata" class="option-content">
           <label class="title">Machine Model</label><cap></cap>
           <select id="model">
@@ -76,6 +80,7 @@
           </button>
         </div>
 
+        <!-- Graph Options -->
         <div id="graph" class="option-content">
           <label class="title">Edge Type</label><cap></cap>
           <div class="radio">
@@ -109,6 +114,13 @@
       </div>
     </div>
 
+    <!-- Canvas; Middle Section -->
+    <div id="graphics">
+      <div id="canvas"></div>
+      <div id="canvasbar"></div>
+    </div>
+
+    <!-- Display Menu; Right Section -->
     <div id="rightdivider" class="vdivider"></div>
 
     <div id="rightsidenav" class="sidenav" style="width: 32px; right: 0">
@@ -138,13 +150,13 @@
       </div>
     </div>
 
-    <div id="canvas"></div>
+    <!-- Scripts -->
+    <script type="text/javascript" src="scripts/utilities.js"></script>
+
     <script type="text/javascript" src="scripts/canvas.js"></script>
 
     <script type="text/javascript" src="scripts/sidenav.js"></script>
-
     <script type="text/javascript" src="scripts/options.js"></script>
-
     <script type="text/javascript" src="scripts/divider.js"></script>
     <script type="text/javascript" src="scripts/display.js"></script>
   </body>

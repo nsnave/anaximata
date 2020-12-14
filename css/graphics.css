@@ -1,0 +1,16 @@
+#graphics {
+  margin-left: 250px;
+  margin-right: 32px;
+  transition: 0.5s;
+  padding: 0px;
+}
+
+#canvas {
+  top: 0;
+}
+
+#canvasbar {
+  background-color: black;
+  height: 0;
+  bottom: 0;
+}
