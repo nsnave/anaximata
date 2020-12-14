@@ -43,17 +43,69 @@
         >&laquo;</a
       >
       <div id="options">
-        <label>Maybe</label><cap></cap>
-        <button id="select" class="mode_button">Select</button>
-        <button id="insert_state" class="mode_button">Insert State</button>
-        <button id="insert_transition" class="mode_button">
-          Insert Transition
-        </button>
-        <button id="remove" class="mode_button">Remove State/Transition</button>
-        <button id="mark_initial" class="mode_button">
-          Mark/Unmark Initial
-        </button>
-        <button id="mark_final" class="mode_button">Mark/Unmark Final</button>
+        <label class="title">Type</label><cap></cap>
+        <select id="type">
+          <option value="automata">Transition Diagram</option>
+          <option value="graph">Graph</option>
+        </select>
+        <br /><br /><br />
+
+        <div id="automata" class="option-content">
+          <label class="title">Machine Model</label><cap></cap>
+          <select id="model">
+            <option value="finite">DFA/NFA/&epsilon;-NFA</option>
+            <option value="push-down">PDA</option>
+            <option value="turing">Turing Machine</option>
+          </select>
+          <br /><br />
+
+          <label class="title">Transition Diagram Tools</label><cap></cap>
+          <button id="select" class="mode_button">Select/Move Element</button>
+          <button id="insert_state" class="mode_button">Insert State</button>
+          <button id="insert_transition" class="mode_button">
+            Insert Transition
+          </button>
+          <button id="remove" class="mode_button">
+            Remove State/Transition
+          </button>
+          <button id="mark_initial" class="mode_button">
+            Mark/Unmark Initial State
+          </button>
+          <button id="mark_final" class="mode_button">
+            Mark/Unmark Final State
+          </button>
+        </div>
+
+        <div id="graph" class="option-content">
+          <label class="title">Edge Type</label><cap></cap>
+          <div class="radio">
+            <input
+              type="radio"
+              name="edge-type"
+              id="radio-directed"
+              value="directed"
+            />
+            <label for="radio-directed">Directed</label>
+          </div>
+          <div class="radio">
+            <input
+              type="radio"
+              name="edge-type"
+              id="radio-undirected"
+              value="undirected"
+            />
+            <label for="radio-undirected">Undirected</label>
+          </div>
+          <br />
+
+          <label class="title">Graph Tools</label><cap></cap>
+          <button id="select" class="mode_button">Select</button>
+          <button id="insert_state" class="mode_button">Insert Vertex</button>
+          <button id="insert_transition" class="mode_button">
+            Insert Edge
+          </button>
+          <button id="remove" class="mode_button">Remove Vertex/Edge</button>
+        </div>
       </div>
     </div>
 
