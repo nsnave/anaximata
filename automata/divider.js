@@ -1,10 +1,9 @@
 //handles resizing the right sidenav
 document.getElementById("rightdivider").onmousedown = dividerMouseDown;
-let disp = document.getElementById("display");
 
 function dividerMouseDown(e) {
   //stops text from being selected on drag
-  disp.classList.add("freeze");
+  document.body.classList.add("freeze");
 
   document.onmouseup = dividerMouseUp;
   document.onmouseleave = dividerMouseUp;
@@ -14,7 +13,7 @@ function dividerMouseDown(e) {
 
 function dividerMouseUp(e) {
   //allows text to be selected again
-  disp.classList.remove("freeze");
+  document.body.classList.remove("freeze");
 
   document.onmouseup = null;
   document.onmouseleave = null;

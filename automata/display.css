@@ -7,15 +7,6 @@
   transition: 0.5s;
 }
 
-.freeze {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
 /* Style the buttons that are used to open and close the accordion panel */
 .accordion {
   background-color: #eee;

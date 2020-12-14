@@ -4,7 +4,6 @@ let left_open_width = 250;
 
 let maybe = (window.innerWidth - left_open_width) * (2 / 5);
 let right_open_width = maybe > 250 ? maybe : 250;
-console.log(right_open_width);
 document.getElementById("display").style.width = right_open_width + "px";
 
 function resetTransitionSpeeds() {
