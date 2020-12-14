@@ -1,7 +1,10 @@
 let left_open = true;
 let right_open = false;
 let left_open_width = 250;
-let right_open_width = 250;
+
+let maybe = (window.innerWidth - left_open_width) * (2 / 5);
+let right_open_width = maybe > 250 ? maybe : 250;
+document.getElementById("display").style.width = right_open_width;
 
 function resetTransitionSpeeds() {
   document.getElementById("rightdivider").style.transition = "0.5s";
