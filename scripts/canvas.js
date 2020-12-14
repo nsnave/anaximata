@@ -51,6 +51,7 @@ const arrows = {}; //(circle1.id, circle2.id) -> arrow that points connects circ
 const circles = {}; //(arrow.id) -> { out: circle1, in: circle2 }
 const start_circles = {}; //(circle.id) -> initial arrow
 const end_circles = {}; //(circle.id) -> final sub-circle
+const arrow_text = {}; //(arrow.id) -> transition text
 
 //stage constants
 let stage_left_offset = 250;
@@ -173,6 +174,9 @@ function removeArrow(arrow) {
   delete circles[arrow.id()];
   delete arrows[c.out.id()][c.in.id()];
 
+  if (arrow_text[arrow.id()] != undefined) arrow_text[arrow.id()].destroy();
+  delete arrow_text[arrow.id()];
+
   let index = directed_in[c.in.id()].indexOf(c.out);
   directed_in[c.in.id()].splice(index, 1);
 
@@ -195,6 +199,11 @@ function removeCircle(circle) {
       let arrow = arrows[other.id()][circle.id()];
       if (arrow != undefined) {
         delete circles[arrow.id()];
+
+        if (arrow_text[arrow.id()] != undefined)
+          arrow_text[arrow.id()].destroy();
+        delete arrow_text[arrow.id()];
+
         arrow.destroy();
       }
       delete arrows[other.id()][circle.id()];
@@ -211,6 +220,11 @@ function removeCircle(circle) {
       let arrow = arrows[circle.id()][other.id()];
       if (arrow != undefined) {
         delete circles[arrow.id()];
+
+        if (arrow_text[arrow.id()] != undefined)
+          arrow_text[arrow.id()].destroy();
+        delete arrow_text[arrow.id()];
+
         arrow.destroy();
       }
       delete arrows[circle.id()][other.id()];
@@ -234,8 +248,13 @@ function removeCircle(circle) {
 
 //arrow event functions
 function arrowClickEvent(e) {
-  if (mode == modes.REMOVE) {
-    /*
+  switch (mode) {
+    case modes.SELECT: {
+      console.log(arrow_text[e.target.id()]);
+      break;
+    }
+    case modes.REMOVE: {
+      /*
     console.log(JSON.stringify(circles));
     console.log(JSON.stringify(arrows));
     console.log(JSON.stringify(directed_in));
@@ -243,10 +262,12 @@ function arrowClickEvent(e) {
     console.log("");
     */
 
-    removeArrow(e.target);
-    e.target.destroy();
+      removeArrow(e.target);
+      e.target.destroy();
 
-    layer.draw();
+      layer.draw();
+      break;
+    }
   }
 }
 
@@ -441,10 +462,7 @@ function initialArrowAngle(mouse_x, mouse_y, circle_x, circle_y) {
 
   if (x == 0 && y == 0) return;
 
-  let theta = Math.atan(y / x) * (180 / Math.PI);
-
-  if (x >= 0) theta += 180;
-  if (theta < 0) theta += 360;
+  let theta = atanDiff(x, y);
 
   let sector_size = 15;
   theta += sector_size / 2;
@@ -481,7 +499,7 @@ function newInitialArrow(x, y) {
 
 //creates a new final sub-circle centered at (x, y)
 function newFinalSubCircle(x, y) {
-  var circle = new Konva.Circle({
+  let circle = new Konva.Circle({
     x: x,
     y: y,
     radius: final_subcircle_radius,
@@ -491,6 +509,31 @@ function newFinalSubCircle(x, y) {
     name: "final-subcircle",
   });
   return circle;
+}
+
+//calculates the position of the text for an arrow
+function calcArrowTextPosition(arrow, text) {
+  //normal arrow
+  if (arrow.name() === "arrow") {
+    let points = arrow.points();
+
+    let mid = midpointArr(points);
+    let perp_uvec = perpUVecLine(points);
+
+    let w = text.width();
+    let h = text.height();
+
+    let mag = Math.sqrt(w * w + h * h) / 2 + 2;
+
+    let x = mag * perp_uvec[0] + mid.x - w / 2;
+    let y = mag * perp_uvec[1] + mid.y - h / 2;
+
+    return { x: x, y: y };
+  }
+  //self-arrow
+  else {
+    return { x: 0, y: 0 };
+  }
 }
 
 //variables for circle events
@@ -627,6 +670,22 @@ function circleClickEvent(e) {
         directed_in[in_circle.id()].push(out_circle);
         arrows[out_circle.id()][in_circle.id()] = arrow;
         circles[arrow.id()] = { out: out_circle, in: in_circle };
+
+        //adds transition text
+        let text = document.getElementById("transition-textbox").value;
+        let graphical_text = new Konva.Text({
+          text: text,
+          fontSize: 30,
+          fontFamily: "Calibri",
+          fill: "green",
+        });
+
+        let text_position = calcArrowTextPosition(arrow, graphical_text);
+        graphical_text.setX(text_position.x);
+        graphical_text.setY(text_position.y);
+
+        arrow_text[arrow.id()] = graphical_text;
+        layer.add(graphical_text);
       }
 
       layer.draw();

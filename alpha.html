@@ -69,6 +69,7 @@
           <button id="insert_transition" class="mode_button">
             Insert Transition
           </button>
+          <input type="text" id="transition-textbox" />
           <button id="remove" class="mode_button">
             Remove State/Transition
           </button>
@@ -104,12 +105,12 @@
           <br />
 
           <label class="title">Graph Tools</label><cap></cap>
-          <button id="select" class="mode_button">Select</button>
-          <button id="insert_state" class="mode_button">Insert Vertex</button>
-          <button id="insert_transition" class="mode_button">
-            Insert Edge
+          <button id="select_graph" class="mode_button">Select</button>
+          <button id="insert_vertex" class="mode_button">Insert Vertex</button>
+          <button id="insert_edge" class="mode_button">Insert Edge</button>
+          <button id="remove_graph" class="mode_button">
+            Remove Vertex/Edge
           </button>
-          <button id="remove" class="mode_button">Remove Vertex/Edge</button>
         </div>
       </div>
     </div>
@@ -117,7 +118,10 @@
     <!-- Canvas; Middle Section -->
     <div id="graphics">
       <div id="canvas"></div>
-      <div id="canvasbar"></div>
+      <div id="canvasbar">
+        <!--<input type="text" id="textbox" />
+        <button id="textbox-submit">Submit</button>-->
+      </div>
     </div>
 
     <!-- Display Menu; Right Section -->
