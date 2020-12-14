@@ -18,7 +18,7 @@
   font-size: 25px;
   color: #8f8f8f; /* was #818181 */
   display: block;
-  transition: 0.3s;
+  transition: 0.3s ease-out;
 }
 
 /* When you mouse over the navigation links, change their color */

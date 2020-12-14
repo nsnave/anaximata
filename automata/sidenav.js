@@ -4,7 +4,8 @@ let left_open_width = 250;
 
 let maybe = (window.innerWidth - left_open_width) * (2 / 5);
 let right_open_width = maybe > 250 ? maybe : 250;
-document.getElementById("display").style.width = right_open_width;
+console.log(right_open_width);
+document.getElementById("display").style.width = right_open_width + "px";
 
 function resetTransitionSpeeds() {
   document.getElementById("rightdivider").style.transition = "0.5s";
@@ -23,6 +24,8 @@ function openLeftNav() {
   document.getElementById("leftsidenav").style.width = "250px";
   document.getElementById("canvas").style.marginLeft = "250px";
 
+  document.getElementById("options").style.marginLeft = 0;
+
   var btn = document.getElementById("leftnavbtn");
   btn.setAttribute("onClick", "closeLeftNav()");
   btn.innerHTML = "&laquo";
@@ -36,6 +39,8 @@ function closeLeftNav() {
 
   document.getElementById("leftsidenav").style.width = "32px";
   document.getElementById("canvas").style.marginLeft = "32px";
+
+  document.getElementById("options").style.marginLeft = -left_open_width + "px";
 
   var btn = document.getElementById("leftnavbtn");
   btn.setAttribute("onClick", "openLeftNav()");

@@ -18,6 +18,7 @@
       }
     </style>
     <link rel="stylesheet" type="text/css" href="sidenav.css" />
+    <link rel="stylesheet" type="text/css" href="options.css" />
     <link rel="stylesheet" type="text/css" href="display.css" />
   </head>
   <body>
@@ -33,12 +34,19 @@
         onclick="closeLeftNav()"
         >&laquo;</a
       >
-      <a id="select">Select</a>
-      <a id="insert_state">Insert State</a>
-      <a id="insert_transition">Insert Transition</a>
-      <a id="remove">Remove</a>
-      <a id="mark_initial">Mark Initial</a>
-      <a id="mark_final">Mark Final</a>
+      <div id="options">
+        <label>Maybe</label><cap></cap>
+        <button id="select" class="mode_button">Select</button>
+        <button id="insert_state" class="mode_button">Insert State</button>
+        <button id="insert_transition" class="mode_button">
+          Insert Transition
+        </button>
+        <button id="remove" class="mode_button">Remove State/Transition</button>
+        <button id="mark_initial" class="mode_button">
+          Mark/Unmark Initial
+        </button>
+        <button id="mark_final" class="mode_button">Mark/Unmark Final</button>
+      </div>
     </div>
 
     <div id="rightdivider" class="vdivider"></div>
@@ -74,6 +82,9 @@
     <script type="text/javascript" src="canvas.js"></script>
 
     <script type="text/javascript" src="sidenav.js"></script>
+
+    <script type="text/javascript" src="options.js"></script>
+
     <script type="text/javascript" src="divider.js"></script>
     <script type="text/javascript" src="display.js"></script>
   </body>

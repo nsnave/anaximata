@@ -82,7 +82,6 @@ function updateStageOffsets(
 }
 window.addEventListener("transitionend", function () {
   updateStageOffsets();
-  console.log("done");
 });
 
 //displays current data structures in right sidenav display
