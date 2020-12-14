@@ -9,7 +9,7 @@ document.getElementById("display").style.width = right_open_width + "px";
 function resetTransitionSpeeds() {
   document.getElementById("rightdivider").style.transition = "0.5s";
   document.getElementById("rightsidenav").style.transition = "0.5s";
-  document.getElementById("canvas").style.transition = "0.5s";
+  document.getElementById("graphics").style.transition = "0.5s";
   document.getElementById("display").style.transition = "0.5s";
 }
 
@@ -21,7 +21,7 @@ function openLeftNav() {
   resetTransitionSpeeds();
 
   document.getElementById("leftsidenav").style.width = "250px";
-  document.getElementById("canvas").style.marginLeft = "250px";
+  document.getElementById("graphics").style.marginLeft = "250px";
 
   document.getElementById("options").style.marginLeft = 0;
 
@@ -37,7 +37,7 @@ function closeLeftNav() {
   resetTransitionSpeeds();
 
   document.getElementById("leftsidenav").style.width = "32px";
-  document.getElementById("canvas").style.marginLeft = "32px";
+  document.getElementById("graphics").style.marginLeft = "32px";
 
   document.getElementById("options").style.marginLeft = -left_open_width + "px";
 
@@ -54,7 +54,8 @@ function openRightNav() {
   resetTransitionSpeeds();
 
   document.getElementById("rightsidenav").style.width = right_open_width + "px";
-  document.getElementById("canvas").style.marginRight = right_open_width + "px";
+  document.getElementById("graphics").style.marginRight =
+    right_open_width + "px";
 
   let div = document.getElementById("rightdivider").style;
   div.width = "3px";
@@ -74,7 +75,7 @@ function closeRightNav() {
   resetTransitionSpeeds();
 
   document.getElementById("rightsidenav").style.width = "32px";
-  document.getElementById("canvas").style.marginRight = "32px";
+  document.getElementById("graphics").style.marginRight = "32px";
 
   let div = document.getElementById("rightdivider").style;
   div.width = 0;
@@ -93,13 +94,13 @@ function changeRightOpenWidth(new_right) {
 
     document.getElementById("rightdivider").style.transition = "0s";
     document.getElementById("rightsidenav").style.transition = "0s";
-    document.getElementById("canvas").style.transition = "0s";
+    document.getElementById("graphics").style.transition = "0s";
     document.getElementById("display").style.transition = "0s";
 
     document.getElementById("display").style.width = new_right + "px";
     document.getElementById("rightdivider").style.right = new_right + "px";
     document.getElementById("rightsidenav").style.width = new_right + "px";
-    document.getElementById("canvas").style.marginRight = new_right + "px";
+    document.getElementById("graphics").style.marginRight = new_right + "px";
   }
 }
 

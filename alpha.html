@@ -14,12 +14,6 @@
         overflow: hidden;
         background-color: #f0f0f0;
       }
-      #canvas {
-        margin-left: 250px;
-        margin-right: 32px;
-        transition: 0.5s;
-        padding: 0px;
-      }
       .freeze {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
@@ -29,7 +23,10 @@
         user-select: none;
       }
     </style>
+
     <!-- CSS Linked Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="css/graphics.css" />
+
     <link rel="stylesheet" type="text/css" href="css/sidenav.css" />
     <link rel="stylesheet" type="text/css" href="css/options.css" />
     <link rel="stylesheet" type="text/css" href="css/display.css" />
@@ -117,7 +114,7 @@
     <!-- Canvas; Middle Section -->
     <div id="graphics">
       <div id="canvas"></div>
-      <div id="canvas-bar"></div>
+      <div id="canvasbar"></div>
     </div>
 
     <!-- Display Menu; Right Section -->
