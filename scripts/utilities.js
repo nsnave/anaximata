@@ -77,7 +77,7 @@ function perpUVec(v) {
   let upx = px / mag;
   let upy = py / mag;
 
-  return [-upx, -upy];
+  return { x: -upx, y: -upy };
 }
 function perpUVecLine(points) {
   return perpUVec([points[2] - points[0], points[3] - points[1]]);

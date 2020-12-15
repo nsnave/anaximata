@@ -515,18 +515,69 @@ function newFinalSubCircle(x, y) {
 function calcArrowTextPosition(arrow, text) {
   //normal arrow
   if (arrow.name() === "arrow") {
-    let points = arrow.points();
+    //calculates temporary midpoint of text
+    let arrow_points = arrow.points();
 
-    let mid = midpointArr(points);
-    let perp_uvec = perpUVecLine(points);
+    let arrow_mid = midpointArr(arrow_points);
+    let perp_uvec = perpUVecLine(arrow_points);
 
     let w = text.width();
     let h = text.height();
 
-    let mag = Math.sqrt(w * w + h * h) / 2 + 2;
+    let mag = Math.sqrt(w * w + h * h) / 2;
 
-    let x = mag * perp_uvec[0] + mid.x - w / 2;
-    let y = mag * perp_uvec[1] + mid.y - h / 2;
+    let text_mid = {
+      x: mag * perp_uvec.x + arrow_mid.x,
+      y: mag * perp_uvec.y + arrow_mid.y,
+    };
+
+    //calculates the closest corner of the text to arrow line
+    let closest_corner = {};
+    let left_corner, top_corner;
+    if (text_mid.x < arrow_mid.x) {
+      closest_corner.x = text_mid.x + w / 2;
+      left_corner = false;
+    } else {
+      closest_corner.x = text_mid.x - w / 2;
+      left_corner = true;
+    }
+
+    if (text_mid.y < arrow_mid.y) {
+      closest_corner.y = text_mid.y + h / 2;
+      top_corner = false;
+    } else {
+      closest_corner.y = text_mid.y - h / 2;
+      top_corner = true;
+    }
+
+    //calculates the linear equation for the arrow line
+    let arrow_line = {};
+    arrow_line.slope = slopeArr(arrow_points);
+    arrow_line.intercept = arrow_points[1] - arrow_line.slope * arrow_points[0];
+
+    //calculates the linear equation that passes through
+    //  closest_corner and is perpindicular to the arrow line
+    let corner_line = {};
+    corner_line.slope = perp_uvec.y / perp_uvec.x;
+    corner_line.intercept =
+      closest_corner.y - corner_line.slope * closest_corner.x;
+
+    //calculates the intersection of arrow_line and corner_line
+    let intersection = {};
+    intersection.x =
+      (corner_line.intercept - arrow_line.intercept) /
+      (arrow_line.slope - corner_line.slope);
+    intersection.y = arrow_line.slope * intersection.x + arrow_line.intercept;
+
+    //calculates new position of the text
+    let spacing = 4;
+    let new_corner_position = {
+      x: spacing * perp_uvec.x + intersection.x,
+      y: spacing * perp_uvec.y + intersection.y,
+    };
+
+    let x = left_corner ? new_corner_position.x : new_corner_position.x - w;
+    let y = top_corner ? new_corner_position.y : new_corner_position.y - h;
 
     return { x: x, y: y };
   }
@@ -534,6 +585,12 @@ function calcArrowTextPosition(arrow, text) {
   else {
     return { x: 0, y: 0 };
   }
+}
+
+function updateArrowTextPosition(arrow, text) {
+  let text_position = calcArrowTextPosition(arrow, text);
+  text.setX(text_position.x);
+  text.setY(text_position.y);
 }
 
 //variables for circle events
@@ -680,9 +737,7 @@ function circleClickEvent(e) {
           fill: "green",
         });
 
-        let text_position = calcArrowTextPosition(arrow, graphical_text);
-        graphical_text.setX(text_position.x);
-        graphical_text.setY(text_position.y);
+        updateArrowTextPosition(arrow, graphical_text);
 
         arrow_text[arrow.id()] = graphical_text;
         layer.add(graphical_text);
@@ -880,7 +935,9 @@ function circleDragMoveEvent(e) {
         radius,
         radius
       );
-      arrows[id][other.id()].setPoints(p);
+      let arrow = arrows[id][other.id()];
+      arrow.setPoints(p);
+      updateArrowTextPosition(arrow, arrow_text[arrow.id()]);
     }
   });
 
@@ -895,9 +952,12 @@ function circleDragMoveEvent(e) {
         radius,
         radius
       );
-      arrows[other.id()][id].setPoints(p);
+      let arrow = arrows[other.id()][id];
+      arrow.setPoints(p);
+      updateArrowTextPosition(arrow, arrow_text[arrow.id()]);
     }
   });
+  //handles temp_arrow if applicable
   updateArrowPoints(temp_arrow, selected_circle, cur);
 
   //redraws initial arrow and final subcircle if applicable
