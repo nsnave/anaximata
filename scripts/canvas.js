@@ -51,6 +51,7 @@ const arrows = {}; //(circle1.id, circle2.id) -> arrow that points connects circ
 const circles = {}; //(arrow.id) -> { out: circle1, in: circle2 }
 const start_circles = {}; //(circle.id) -> initial arrow
 const end_circles = {}; //(circle.id) -> final sub-circle
+const arrow_text = {}; //(arrow.id) -> transition text
 
 //stage constants
 let stage_left_offset = 250;
@@ -173,6 +174,9 @@ function removeArrow(arrow) {
   delete circles[arrow.id()];
   delete arrows[c.out.id()][c.in.id()];
 
+  if (arrow_text[arrow.id()] != undefined) arrow_text[arrow.id()].destroy();
+  delete arrow_text[arrow.id()];
+
   let index = directed_in[c.in.id()].indexOf(c.out);
   directed_in[c.in.id()].splice(index, 1);
 
@@ -195,6 +199,11 @@ function removeCircle(circle) {
       let arrow = arrows[other.id()][circle.id()];
       if (arrow != undefined) {
         delete circles[arrow.id()];
+
+        if (arrow_text[arrow.id()] != undefined)
+          arrow_text[arrow.id()].destroy();
+        delete arrow_text[arrow.id()];
+
         arrow.destroy();
       }
       delete arrows[other.id()][circle.id()];
@@ -211,6 +220,11 @@ function removeCircle(circle) {
       let arrow = arrows[circle.id()][other.id()];
       if (arrow != undefined) {
         delete circles[arrow.id()];
+
+        if (arrow_text[arrow.id()] != undefined)
+          arrow_text[arrow.id()].destroy();
+        delete arrow_text[arrow.id()];
+
         arrow.destroy();
       }
       delete arrows[circle.id()][other.id()];
@@ -234,8 +248,13 @@ function removeCircle(circle) {
 
 //arrow event functions
 function arrowClickEvent(e) {
-  if (mode == modes.REMOVE) {
-    /*
+  switch (mode) {
+    case modes.SELECT: {
+      console.log(arrow_text[e.target.id()]);
+      break;
+    }
+    case modes.REMOVE: {
+      /*
     console.log(JSON.stringify(circles));
     console.log(JSON.stringify(arrows));
     console.log(JSON.stringify(directed_in));
@@ -243,10 +262,12 @@ function arrowClickEvent(e) {
     console.log("");
     */
 
-    removeArrow(e.target);
-    e.target.destroy();
+      removeArrow(e.target);
+      e.target.destroy();
 
-    layer.draw();
+      layer.draw();
+      break;
+    }
   }
 }
 
@@ -441,10 +462,7 @@ function initialArrowAngle(mouse_x, mouse_y, circle_x, circle_y) {
 
   if (x == 0 && y == 0) return;
 
-  let theta = Math.atan(y / x) * (180 / Math.PI);
-
-  if (x >= 0) theta += 180;
-  if (theta < 0) theta += 360;
+  let theta = atanDiff(x, y);
 
   let sector_size = 15;
   theta += sector_size / 2;
@@ -481,7 +499,7 @@ function newInitialArrow(x, y) {
 
 //creates a new final sub-circle centered at (x, y)
 function newFinalSubCircle(x, y) {
-  var circle = new Konva.Circle({
+  let circle = new Konva.Circle({
     x: x,
     y: y,
     radius: final_subcircle_radius,
@@ -491,6 +509,88 @@ function newFinalSubCircle(x, y) {
     name: "final-subcircle",
   });
   return circle;
+}
+
+//calculates the position of the text for an arrow
+function calcArrowTextPosition(arrow, text) {
+  //normal arrow
+  if (arrow.name() === "arrow") {
+    //calculates temporary midpoint of text
+    let arrow_points = arrow.points();
+
+    let arrow_mid = midpointArr(arrow_points);
+    let perp_uvec = perpUVecLine(arrow_points);
+
+    let w = text.width();
+    let h = text.height();
+
+    let mag = Math.sqrt(w * w + h * h) / 2;
+
+    let text_mid = {
+      x: mag * perp_uvec.x + arrow_mid.x,
+      y: mag * perp_uvec.y + arrow_mid.y,
+    };
+
+    //calculates the closest corner of the text to arrow line
+    let closest_corner = {};
+    let left_corner, top_corner;
+    if (text_mid.x < arrow_mid.x) {
+      closest_corner.x = text_mid.x + w / 2;
+      left_corner = false;
+    } else {
+      closest_corner.x = text_mid.x - w / 2;
+      left_corner = true;
+    }
+
+    if (text_mid.y < arrow_mid.y) {
+      closest_corner.y = text_mid.y + h / 2;
+      top_corner = false;
+    } else {
+      closest_corner.y = text_mid.y - h / 2;
+      top_corner = true;
+    }
+
+    //calculates the linear equation for the arrow line
+    let arrow_line = {};
+    arrow_line.slope = slopeArr(arrow_points);
+    arrow_line.intercept = arrow_points[1] - arrow_line.slope * arrow_points[0];
+
+    //calculates the linear equation that passes through
+    //  closest_corner and is perpindicular to the arrow line
+    let corner_line = {};
+    corner_line.slope = perp_uvec.y / perp_uvec.x;
+    corner_line.intercept =
+      closest_corner.y - corner_line.slope * closest_corner.x;
+
+    //calculates the intersection of arrow_line and corner_line
+    let intersection = {};
+    intersection.x =
+      (corner_line.intercept - arrow_line.intercept) /
+      (arrow_line.slope - corner_line.slope);
+    intersection.y = arrow_line.slope * intersection.x + arrow_line.intercept;
+
+    //calculates new position of the text
+    let spacing = 4;
+    let new_corner_position = {
+      x: spacing * perp_uvec.x + intersection.x,
+      y: spacing * perp_uvec.y + intersection.y,
+    };
+
+    let x = left_corner ? new_corner_position.x : new_corner_position.x - w;
+    let y = top_corner ? new_corner_position.y : new_corner_position.y - h;
+
+    return { x: x, y: y };
+  }
+  //self-arrow
+  else {
+    return { x: 0, y: 0 };
+  }
+}
+
+function updateArrowTextPosition(arrow, text) {
+  let text_position = calcArrowTextPosition(arrow, text);
+  text.setX(text_position.x);
+  text.setY(text_position.y);
 }
 
 //variables for circle events
@@ -627,6 +727,20 @@ function circleClickEvent(e) {
         directed_in[in_circle.id()].push(out_circle);
         arrows[out_circle.id()][in_circle.id()] = arrow;
         circles[arrow.id()] = { out: out_circle, in: in_circle };
+
+        //adds transition text
+        let text = document.getElementById("transition-textbox").value;
+        let graphical_text = new Konva.Text({
+          text: text,
+          fontSize: 30,
+          fontFamily: "Calibri",
+          fill: "green",
+        });
+
+        updateArrowTextPosition(arrow, graphical_text);
+
+        arrow_text[arrow.id()] = graphical_text;
+        layer.add(graphical_text);
       }
 
       layer.draw();
@@ -821,7 +935,9 @@ function circleDragMoveEvent(e) {
         radius,
         radius
       );
-      arrows[id][other.id()].setPoints(p);
+      let arrow = arrows[id][other.id()];
+      arrow.setPoints(p);
+      updateArrowTextPosition(arrow, arrow_text[arrow.id()]);
     }
   });
 
@@ -836,9 +952,12 @@ function circleDragMoveEvent(e) {
         radius,
         radius
       );
-      arrows[other.id()][id].setPoints(p);
+      let arrow = arrows[other.id()][id];
+      arrow.setPoints(p);
+      updateArrowTextPosition(arrow, arrow_text[arrow.id()]);
     }
   });
+  //handles temp_arrow if applicable
   updateArrowPoints(temp_arrow, selected_circle, cur);
 
   //redraws initial arrow and final subcircle if applicable
