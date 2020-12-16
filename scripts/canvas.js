@@ -376,6 +376,8 @@ function selfArrowDragMoveEvent(e) {
   e.target.setX(circle.getX());
   e.target.setY(circle.getY());
 
+  updateArrowTextPosition(e.target, arrow_text[e.target.id()].text);
+
   layer.draw();
 }
 
@@ -1084,6 +1086,7 @@ function circleDragMoveEvent(e) {
   if (self_arrow != undefined) {
     self_arrow.setX(cur.getX());
     self_arrow.setY(cur.getY());
+    updateArrowTextPosition(self_arrow, arrow_text[self_arrow.id()].text);
   }
   if (temp_self_arrow != null && cur == selected_circle) {
     temp_self_arrow.setX(cur.getX());
