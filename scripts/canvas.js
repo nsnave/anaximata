@@ -44,6 +44,12 @@ const self_arrow_radius = radius * 0.8;
 const pointer_width = 10;
 const initial_arrow_length = radius;
 
+//text constants for arrow labels
+const text_font_size = 28;
+const text_font_size_hover = 32;
+const text_font_color = "black";
+const text_font_family = "Calibri";
+
 //adjacency lists, etc.
 const all_circles = {};
 const directed_in = {}; //(circle.id) -> [circles that point to circle]
@@ -107,19 +113,19 @@ const scaleBy = 0.94;
 stage.on("wheel", (e) => {
   e.evt.preventDefault();
 
-  var oldScale = stage.scaleX();
-  var pointer = stage.getPointerPosition();
+  let oldScale = stage.scaleX();
+  let pointer = stage.getPointerPosition();
 
-  var mousePointTo = {
+  let mousePointTo = {
     x: (pointer.x - stage.x()) / oldScale,
     y: (pointer.y - stage.y()) / oldScale,
   };
 
-  var newScale = e.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+  let newScale = e.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
   stage.scale({ x: newScale, y: newScale });
 
-  var newPos = {
+  let newPos = {
     x: pointer.x - mousePointTo.x * newScale,
     y: pointer.y - mousePointTo.y * newScale,
   };
@@ -129,10 +135,10 @@ stage.on("wheel", (e) => {
 
 //gets the coordinates of the mouse relative to the stage
 function getCoords() {
-  var oldScale = stage.scaleX();
-  var pointer = stage.getPointerPosition();
+  let oldScale = stage.scaleX();
+  let pointer = stage.getPointerPosition();
 
-  var coords = {
+  let coords = {
     x: (pointer.x - stage.x()) / oldScale,
     y: (pointer.y - stage.y()) / oldScale,
   };
@@ -142,10 +148,10 @@ function getCoords() {
 
 //calculates the start and end points for a line connecting two circles
 function calcPoints(x1, y1, x2, y2, r1, r2) {
-  var x = x2 - x1,
+  let x = x2 - x1,
     y = y2 - y1;
-  var theta = Math.atan(y / x);
-  var sin = Math.sin(theta),
+  let theta = Math.atan(y / x);
+  let sin = Math.sin(theta),
     cos = Math.cos(theta);
 
   if (x < 0) {
@@ -153,16 +159,16 @@ function calcPoints(x1, y1, x2, y2, r1, r2) {
     cos = -1 * cos;
   }
 
-  var arrow_start_radius = r1 + 10;
-  var arrow_end_radius = Math.sqrt(x * x + y * y) - r2 - 10;
+  let arrow_start_radius = r1 + 10;
+  let arrow_end_radius = Math.sqrt(x * x + y * y) - r2 - 10;
 
-  var arrow_start_x = cos * arrow_start_radius + x1;
-  var arrow_start_y = sin * arrow_start_radius + y1;
+  let arrow_start_x = cos * arrow_start_radius + x1;
+  let arrow_start_y = sin * arrow_start_radius + y1;
 
-  var arrow_end_x = cos * arrow_end_radius + x1;
-  var arrow_end_y = sin * arrow_end_radius + y1;
+  let arrow_end_x = cos * arrow_end_radius + x1;
+  let arrow_end_y = sin * arrow_end_radius + y1;
 
-  var p = [arrow_start_x, arrow_start_y, arrow_end_x, arrow_end_y];
+  let p = [arrow_start_x, arrow_start_y, arrow_end_x, arrow_end_y];
 
   return p;
 }
@@ -294,7 +300,7 @@ function arrowOutEvent(e) {
 
 //creates a new arrow between two points
 function newArrow(points) {
-  var arrow = new Konva.Arrow({
+  let arrow = new Konva.Arrow({
     points: points,
     pointerLength: arrow_pointer_size,
     pointerWidth: arrow_pointer_size,
@@ -340,11 +346,7 @@ function selfArrowClickEvent(e) {
 }
 
 function selfArrowOverEvent(e) {
-  if (
-    mode == modes.SELECT ||
-    mode == modes.REMOVE ||
-    mode == modes.INSERT.TRANSITION.FROM
-  ) {
+  if (mode == modes.SELECT || mode == modes.REMOVE) {
     let children = e.target.parent.getChildren();
     children.each(function (child, n) {
       child.strokeWidth(arrow_width + 3);
@@ -608,7 +610,7 @@ function updateArrowTextPosition(arrow, text) {
 
 //handles dragging the text of an arrow
 //  (updates the arrow text offset)
-function dragMoveArrowTextEvent(e) {
+function textDragMoveArrowEvent(e) {
   let arrow = text_arrow[e.target.id()];
   let arrow_points = arrow.points();
 
@@ -649,6 +651,51 @@ function dragMoveArrowTextEvent(e) {
   arrow_text[arrow.id()].ratio = dist / distArr(arrow_points);
 
   updateArrowTextPosition(arrow, text_obj.text);
+}
+
+//handles when mouse clicks text
+function textClickEvent(e) {}
+
+//handles when hovering over text
+function textOverEvent(e) {
+  if (mode == modes.SELECT) {
+    e.target.fontSize(text_font_size_hover);
+    updateArrowTextPosition(text_arrow[e.target.id()], e.target);
+    layer.draw();
+  }
+}
+
+function textOutEvent(e) {
+  if (mode == modes.SELECT) {
+    e.target.fontSize(text_font_size);
+    updateArrowTextPosition(text_arrow[e.target.id()], e.target);
+    layer.draw();
+  }
+}
+
+//creates a new text label for an arrow
+function newArrowTextLabel(arrow, text) {
+  let graphical_text = new Konva.Text({
+    text: text,
+    fontSize: text_font_size,
+    fontFamily: text_font_family,
+    fill: text_font_color,
+    id: text_ids++,
+    draggable: true,
+  });
+  text_arrow[graphical_text.id()] = arrow;
+
+  arrow_text[arrow.id()] = {};
+  arrow_text[arrow.id()].text = graphical_text;
+  arrow_text[arrow.id()].ratio = 0;
+
+  updateArrowTextPosition(arrow, graphical_text);
+  graphical_text.on("dragmove", textDragMoveArrowEvent);
+  graphical_text.on("mouseclick", textClickEvent);
+  graphical_text.on("mouseover", textOverEvent);
+  graphical_text.on("mouseout", textOutEvent);
+
+  return graphical_text;
 }
 
 //variables for circle events
@@ -788,23 +835,7 @@ function circleClickEvent(e) {
 
         //adds transition text
         let text = document.getElementById("transition-textbox").value;
-        let graphical_text = new Konva.Text({
-          text: text,
-          fontSize: 30,
-          fontFamily: "Calibri",
-          fill: "green",
-          id: text_ids++,
-          draggable: true,
-        });
-        text_arrow[graphical_text.id()] = arrow;
-
-        arrow_text[arrow.id()] = {};
-        arrow_text[arrow.id()].text = graphical_text;
-        arrow_text[arrow.id()].ratio = 0;
-
-        updateArrowTextPosition(arrow, graphical_text);
-        graphical_text.on("dragmove", dragMoveArrowTextEvent);
-
+        let graphical_text = newArrowTextLabel(arrow, text);
         layer.add(graphical_text);
       }
 
@@ -1051,9 +1082,9 @@ function circleDragMoveEvent(e) {
 
 //generates a new circle at the current mouse position
 function newCircle(is_hover = false) {
-  var coords = getCoords();
+  let coords = getCoords();
 
-  var circle = new Konva.Circle({
+  let circle = new Konva.Circle({
     x: coords.x,
     y: coords.y,
     radius: radius,
@@ -1084,7 +1115,7 @@ function newCircle(is_hover = false) {
 //adds circle to stage on click of stage if mode = modes.INSERT.STATE
 stage.on("click", function () {
   if (mode == modes.INSERT.STATE) {
-    var circle = newCircle();
+    let circle = newCircle();
 
     layer.add(circle);
     layer.draw();
@@ -1092,7 +1123,7 @@ stage.on("click", function () {
 });
 
 //has a circle follow mouse if mode = modes.INSERT.STATE
-var hover_circle;
+let hover_circle;
 
 stage.on("mouseenter", function () {
   if (mode == modes.INSERT.STATE) {
@@ -1245,53 +1276,3 @@ document.getElementById("mark_initial").addEventListener("click", function () {
 document.getElementById("mark_final").addEventListener("click", function () {
   changeMode(modes.MARK.FINAL);
 });
-
-/*
-//handles the addition of a new circle to the stage
-document.getElementById("plus").addEventListener("click", function () {
-  var c = newCircle();
-  c.on("dragmove", adjustPoints);
-
-  var arr = [];
-  var con = [];
-
-  len = circles.length;
-  for (var i = 0; i < len; i++) {
-    var a = newCircleArrow(c, circles[i]);
-    layer.add(a);
-
-    arr.push(a);
-    con.push(circles[i]);
-  }
-
-  circles.push(c);
-  arrows.push(arr);
-  connected.push(con);
-
-  layer.add(c);
-  layer.draw();
-});
-
-//removes last circle added from stage
-document.getElementById("minus").addEventListener("click", function () {
-  var id = circles.length - 1;
-
-  //removes and frees arrows directed out of circle
-  var arr_len = arrows[id].length;
-  for (var i = 0; i < arr_len; i++) {
-    var temp = arrows[id].pop();
-    temp.destroy();
-  }
-  arrows.pop();
-
-  //removes and frees circle
-  var cir = circles.pop();
-  cir.destroy();
-
-  connected.pop();
-
-  circle_ids--;
-
-  layer.draw();
-});
-*/
