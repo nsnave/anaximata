@@ -675,6 +675,9 @@ function textOutEvent(e) {
 
 //creates a new text label for an arrow
 function newArrowTextLabel(arrow, text) {
+  text = text.replaceAll("\\e", String.fromCharCode(949));
+  text = text.replaceAll("->", String.fromCharCode(8594));
+
   let graphical_text = new Konva.Text({
     text: text,
     fontSize: text_font_size,
