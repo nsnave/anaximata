@@ -99,14 +99,40 @@ function perpUVecLine(points, is_uVec = false) {
   return perpUVec({ x: points[2] - points[0], y: points[3] - points[1] });
 }
 
+//solves a system of two linear equations
 function solveLinear2(eq1, eq2) {
   let intersection = {};
-  intersection.x = (eq2.intercept - eq1.intercept) / (eq1.slope - eq2.slope);
-  intersection.y = eq1.slope * intersection.x + eq1.intercept;
-
+  if (
+    eq1.slope != Infinity &&
+    eq1.slope != -Infinity &&
+    eq2.slope != Infinity &&
+    eq2.slope != -Infinity
+  ) {
+    intersection.x = (eq2.intercept - eq1.intercept) / (eq1.slope - eq2.slope);
+    intersection.y = eq1.slope * intersection.x + eq1.intercept;
+  } else if (eq1.slope == Infinity || eq1.slope == -Infinity) {
+    intersection.x = eq1.intercept;
+    intersection.y = eq2.slope * intersection.x + eq2.intercept;
+  } else if (eq2.slope == Infinity || eq2.slope == -Infinity) {
+    intersection.x = eq2.intercept;
+    intersection.y = eq1.slope * intersection.x + eq1.intercept;
+  } else {
+    intersection.x = Infinity;
+    intersection.y = Infinity;
+  }
   return intersection;
 }
 
+//Calculates the x-intercept for a linear equation passing through
+//    a point given the desired slope
+//
+//  if the slope of the equation is Infinity (i.e., undefined),
+//    then the x value for the equation is stored in intercept
 function lineFromSlopeAndPoint(slope, point) {
-  return { slope: slope, intercept: point.y - slope * point.x };
+  let temp = { slope: slope };
+  temp.intercept =
+    slope == Infinity || slope == -Infinity
+      ? point.x
+      : point.y - slope * point.x;
+  return temp;
 }
