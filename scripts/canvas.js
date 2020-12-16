@@ -523,87 +523,152 @@ function newFinalSubCircle(x, y) {
 
 //calculates the position of the text for an arrow
 function calcArrowTextPosition(arrow, text, offset_ratio) {
-  //normal arrow
-  if (arrow.name() === "arrow") {
-    //calculates temporary midpoint of text
-    let arrow_points = arrow.points();
+  //calculates temporary midpoint of text
+  let arrow_points = arrow.points();
 
-    let arrow_mid = midpointArr(arrow_points);
-    let para_uvec = uVecLine(arrow_points);
-    let perp_uvec = flipVec(perpUVec(para_uvec, true));
+  let arrow_mid = midpointArr(arrow_points);
+  let para_uvec = uVecLine(arrow_points);
+  let perp_uvec = flipVec(perpUVec(para_uvec, true));
 
-    let w = text.width();
-    let h = text.height();
+  let w = text.width();
+  let h = text.height();
 
-    let mag = Math.sqrt(w * w + h * h) / 2;
+  let mag = Math.sqrt(w * w + h * h) / 2;
 
-    let text_mid = {
-      x: mag * perp_uvec.x + arrow_mid.x,
-      y: mag * perp_uvec.y + arrow_mid.y,
-    };
+  let text_mid = {
+    x: mag * perp_uvec.x + arrow_mid.x,
+    y: mag * perp_uvec.y + arrow_mid.y,
+  };
 
-    //calculates the closest corner of the text to arrow line
-    let closest_corner = {};
-    let left_corner, top_corner;
-    if (text_mid.x < arrow_mid.x) {
-      closest_corner.x = text_mid.x + w / 2;
-      left_corner = false;
-    } else {
-      closest_corner.x = text_mid.x - w / 2;
-      left_corner = true;
-    }
-
-    if (text_mid.y < arrow_mid.y) {
-      closest_corner.y = text_mid.y + h / 2;
-      top_corner = false;
-    } else {
-      closest_corner.y = text_mid.y - h / 2;
-      top_corner = true;
-    }
-    arrow_text[arrow.id()].corner = closest_corner;
-
-    //calculates the linear equation for the arrow line
-    let arrow_line = lineFromSlopeAndPoint(para_uvec.y / para_uvec.x, {
-      x: arrow_points[0],
-      y: arrow_points[1],
-    });
-
-    //calculates the linear equation that passes through
-    //  closest_corner and is perpindicular to the arrow line
-    let corner_line = lineFromSlopeAndPoint(
-      perp_uvec.y / perp_uvec.x,
-      closest_corner
-    );
-
-    //calculates the intersection of arrow_line and corner_line
-    let intersection = solveLinear2(arrow_line, corner_line);
-
-    //calculates new position of the text
-    let spacing = 4;
-    let offset = distArr(arrow_points) * offset_ratio;
-    let new_corner_position = {
-      x: spacing * perp_uvec.x + offset * para_uvec.x + intersection.x,
-      y: spacing * perp_uvec.y + offset * para_uvec.y + intersection.y,
-    };
-
-    let x = left_corner ? new_corner_position.x : new_corner_position.x - w;
-    let y = top_corner ? new_corner_position.y : new_corner_position.y - h;
-
-    return { x: x, y: y };
+  //calculates the closest corner of the text to arrow line
+  let closest_corner = {};
+  let left_corner, top_corner;
+  if (text_mid.x < arrow_mid.x) {
+    closest_corner.x = text_mid.x + w / 2;
+    left_corner = false;
+  } else {
+    closest_corner.x = text_mid.x - w / 2;
+    left_corner = true;
   }
-  //self-arrow
-  else {
-    return { x: 0, y: 0 };
+
+  if (text_mid.y < arrow_mid.y) {
+    closest_corner.y = text_mid.y + h / 2;
+    top_corner = false;
+  } else {
+    closest_corner.y = text_mid.y - h / 2;
+    top_corner = true;
   }
+  arrow_text[arrow.id()].corner = closest_corner;
+
+  //calculates the linear equation for the arrow line
+  let arrow_line = lineFromSlopeAndPoint(para_uvec.y / para_uvec.x, {
+    x: arrow_points[0],
+    y: arrow_points[1],
+  });
+
+  //calculates the linear equation that passes through
+  //  closest_corner and is perpindicular to the arrow line
+  let corner_line = lineFromSlopeAndPoint(
+    perp_uvec.y / perp_uvec.x,
+    closest_corner
+  );
+
+  //calculates the intersection of arrow_line and corner_line
+  let intersection = solveLinear2(arrow_line, corner_line);
+
+  //calculates new position of the text
+  let spacing = 4;
+  let offset = distArr(arrow_points) * offset_ratio;
+  let new_corner_position = {
+    x: spacing * perp_uvec.x + offset * para_uvec.x + intersection.x,
+    y: spacing * perp_uvec.y + offset * para_uvec.y + intersection.y,
+  };
+
+  let x = left_corner ? new_corner_position.x : new_corner_position.x - w;
+  let y = top_corner ? new_corner_position.y : new_corner_position.y - h;
+
+  return { x: x, y: y };
+}
+
+function calcSelfArrowTextPosition(arrow, text) {
+  //calculates the temporary position of the text
+  let arrow_position = { x: arrow.getX(), y: arrow.getY() };
+
+  let arrow_loop = arrow.getChildren(function (e) {
+    if (e.getClassName() === "Circle") return e;
+  })[0];
+  let arrow_loop_position = arrow_loop.getAbsolutePosition();
+
+  let dist = radius + 2 * self_arrow_radius + arrow_width;
+  let uvec = uVecPoints(arrow_position, arrow_loop_position);
+  console.log(uvec);
+  let perp_uvec = perpUVec(uvec, true);
+
+  let reference = {
+    x: dist * uvec.x + arrow.getX(),
+    y: dist * uvec.y + arrow.getY(),
+  };
+
+  let w = text.width();
+  let h = text.height();
+
+  let mag = Math.sqrt(w * w + h * h) / 2;
+
+  let text_mid = {
+    x: mag * uvec.x + reference.x,
+    y: mag * uvec.y + reference.y,
+  };
+
+  //calculates the closest corner of the text to the reference point
+  let closest_corner = {};
+  let left_corner, top_corner;
+  if (text_mid.x < reference.x) {
+    closest_corner.x = text_mid.x + w / 2;
+    left_corner = false;
+  } else {
+    closest_corner.x = text_mid.x - w / 2;
+    left_corner = true;
+  }
+
+  if (text_mid.y < reference.y) {
+    closest_corner.y = text_mid.y + h / 2;
+    top_corner = false;
+  } else {
+    closest_corner.y = text_mid.y - h / 2;
+    top_corner = true;
+  }
+  arrow_text[arrow.id()].corner = closest_corner;
+
+  //calculates the linear equation for the line perpindicular to the
+  //    radial line out of the arrow that crosses through the reference point
+  let perp_line = lineFromSlopeAndPoint(perp_uvec.y / perp_uvec.x, reference);
+
+  //calculates the linear equation that passes through
+  //  closest_corner and is perpindicular to the perp_line
+  let corner_line = lineFromSlopeAndPoint(uvec.y / uvec.x, closest_corner);
+
+  //calculates the intersection of arrow_line and corner_line
+  let intersection = solveLinear2(perp_line, corner_line);
+
+  //calculates new position of the text
+  let spacing = -4;
+  let new_corner_position = {
+    x: spacing * uvec.x + intersection.x,
+    y: spacing * uvec.y + intersection.y,
+  };
+
+  let x = left_corner ? new_corner_position.x : new_corner_position.x - w;
+  let y = top_corner ? new_corner_position.y : new_corner_position.y - h;
+
+  return { x, y };
 }
 
 //updates the position of the text for an arrow
 function updateArrowTextPosition(arrow, text) {
-  let text_position = calcArrowTextPosition(
-    arrow,
-    text,
-    arrow_text[arrow.id()].ratio
-  );
+  let text_position =
+    arrow.name() === "arrow"
+      ? calcArrowTextPosition(arrow, text, arrow_text[arrow.id()].ratio)
+      : calcSelfArrowTextPosition(arrow, text);
   text.setX(text_position.x);
   text.setY(text_position.y);
 }
@@ -612,45 +677,47 @@ function updateArrowTextPosition(arrow, text) {
 //  (updates the arrow text offset)
 function textDragMoveArrowEvent(e) {
   let arrow = text_arrow[e.target.id()];
-  let arrow_points = arrow.points();
+  if (arrow.name === "arrow") {
+    let arrow_points = arrow.points();
 
-  let para_uvec = uVecLine(arrow_points);
-  let perp_uvec = flipVec(perpUVec(para_uvec, true));
+    let para_uvec = uVecLine(arrow_points);
+    let perp_uvec = flipVec(perpUVec(para_uvec, true));
 
-  let text_obj = arrow_text[arrow.id()];
-  let closest_corner = arrow_text[arrow.id()].corner;
+    let text_obj = arrow_text[arrow.id()];
+    let closest_corner = arrow_text[arrow.id()].corner;
 
-  let mouse_position = getCoords();
+    let mouse_position = getCoords();
 
-  //calculates the line passing through the closest_corner
-  //  of the text with slope parallel to the arrow
-  let text_line = lineFromSlopeAndPoint(
-    para_uvec.y / para_uvec.x,
-    closest_corner
-  );
+    //calculates the line passing through the closest_corner
+    //  of the text with slope parallel to the arrow
+    let text_line = lineFromSlopeAndPoint(
+      para_uvec.y / para_uvec.x,
+      closest_corner
+    );
 
-  //calculates the line passing through the mouse position
-  //  of the text with slope perpendicular to the arrow
-  let mouse_line = lineFromSlopeAndPoint(
-    perp_uvec.y / perp_uvec.x,
-    mouse_position
-  );
+    //calculates the line passing through the mouse position
+    //  of the text with slope perpendicular to the arrow
+    let mouse_line = lineFromSlopeAndPoint(
+      perp_uvec.y / perp_uvec.x,
+      mouse_position
+    );
 
-  //calculates the intersection of these lines
-  let intersection = solveLinear2(text_line, mouse_line);
+    //calculates the intersection of these lines
+    let intersection = solveLinear2(text_line, mouse_line);
 
-  //calculates the magnitude of the distance between
-  //    the intersection and the center of the text
-  let dist = distPoints(closest_corner, intersection);
+    //calculates the magnitude of the distance between
+    //    the intersection and the center of the text
+    let dist = distPoints(closest_corner, intersection);
 
-  //calculates the direction of the distance
-  let angle = atanPoints(closest_corner, intersection);
-  if (angle > 180) dist *= -1;
-  if (arrow_points[3] > arrow_points[1]) dist *= -1;
+    //calculates the direction of the distance
+    let angle = atanPoints(closest_corner, intersection);
+    if (angle > 180) dist *= -1;
+    if (arrow_points[3] > arrow_points[1]) dist *= -1;
 
-  arrow_text[arrow.id()].ratio = dist / distArr(arrow_points);
+    arrow_text[arrow.id()].ratio = dist / distArr(arrow_points);
 
-  updateArrowTextPosition(arrow, text_obj.text);
+    updateArrowTextPosition(arrow, text_obj.text);
+  }
 }
 
 //handles when mouse clicks text

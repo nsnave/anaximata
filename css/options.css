@@ -71,6 +71,10 @@ option {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+#transition-textbox {
+  float: right;
+}
+
 .mode_button {
   background-color: #eee;
   color: #444;

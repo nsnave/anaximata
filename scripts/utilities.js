@@ -89,6 +89,9 @@ function uVec(v) {
 function uVecLine(points) {
   return uVec({ x: points[2] - points[0], y: points[3] - points[1] });
 }
+function uVecPoints(p1, p2) {
+  return uVec({ x: p2.x - p1.x, y: p2.y - p1.y });
+}
 
 //calculates perpendicular unit vector
 function perpUVec(v, is_uVec = false) {
