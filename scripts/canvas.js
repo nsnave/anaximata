@@ -173,6 +173,61 @@ function calcPoints(x1, y1, x2, y2, r1, r2) {
   return p;
 }
 
+function calcCircleArrowPoints(
+  circle1,
+  circle2,
+  update_reverse = false,
+  dynamic_radius = false
+) {
+  let base_arrow_points = calcPoints(
+    circle1.getX(),
+    circle1.getY(),
+    circle2.getX(),
+    circle2.getY(),
+    dynamic_radius ? circle1.radius() : radius,
+    dynamic_radius ? circle2.radius() : radius
+  );
+
+  let reverse = arrows[circle2.id()][circle1.id()];
+  if (reverse != undefined) {
+    let shift = 10;
+
+    let perp_uvec = perpUVecLine(base_arrow_points);
+    let xshift = shift * -perp_uvec.x;
+    let yshift = shift * -perp_uvec.y;
+
+    let shifted_arrow_points = [
+      base_arrow_points[0] + xshift,
+      base_arrow_points[1] + yshift,
+      base_arrow_points[2] + xshift,
+      base_arrow_points[3] + yshift,
+    ];
+
+    if (update_reverse) {
+      let reverse_points = calcPoints(
+        circle2.getX(),
+        circle2.getY(),
+        circle1.getX(),
+        circle1.getY(),
+        dynamic_radius ? circle1.radius() : radius,
+        dynamic_radius ? circle2.radius() : radius
+      );
+      let shifted_reverse_points = [
+        reverse_points[0] - xshift,
+        reverse_points[1] - yshift,
+        reverse_points[2] - xshift,
+        reverse_points[3] - yshift,
+      ];
+      reverse.setPoints(shifted_reverse_points);
+      updateArrowTextPosition(reverse, arrow_text[reverse.id()].text);
+    }
+
+    return shifted_arrow_points;
+  }
+
+  return base_arrow_points;
+}
+
 //remove element from data structures functions
 //removes an arrow
 function removeArrow(arrow) {
@@ -453,14 +508,7 @@ function newCircleArrow(circle1, circle2) {
 
 function updateArrowPoints(arrow, circle1, circle2) {
   if (arrow != null) {
-    let p = calcPoints(
-      circle1.getX(),
-      circle1.getY(),
-      circle2.getX(),
-      circle2.getY(),
-      circle1.radius(),
-      circle2.radius()
-    );
+    let p = calcCircleArrowPoints(circle1, circle2, true, true);
     arrow.setPoints(p);
   }
 }
@@ -601,7 +649,10 @@ function calcSelfArrowTextPosition(arrow, text) {
   })[0];
   let arrow_loop_position = arrow_loop.getAbsolutePosition();
 
-  let dist = radius + 2 * self_arrow_radius + arrow_width;
+  let dist =
+    distPoints(arrow_position, arrow_loop_position) +
+    self_arrow_radius +
+    arrow_width;
   let uvec = uVecPoints(arrow_position, arrow_loop_position);
   console.log(uvec);
   let perp_uvec = perpUVec(uvec, true);
@@ -653,7 +704,7 @@ function calcSelfArrowTextPosition(arrow, text) {
   let intersection = solveLinear2(perp_line, corner_line);
 
   //calculates new position of the text
-  let spacing = -4;
+  let spacing = 0;
   let new_corner_position = {
     x: spacing * uvec.x + intersection.x,
     y: spacing * uvec.y + intersection.y,
@@ -679,7 +730,7 @@ function updateArrowTextPosition(arrow, text) {
 //  (updates the arrow text offset)
 function textDragMoveArrowEvent(e) {
   let arrow = text_arrow[e.target.id()];
-  if (arrow.name === "arrow") {
+  if (arrow.name() === "arrow") {
     let arrow_points = arrow.points();
 
     let para_uvec = uVecLine(arrow_points);
@@ -719,6 +770,13 @@ function textDragMoveArrowEvent(e) {
     arrow_text[arrow.id()].ratio = dist / distArr(arrow_points);
 
     updateArrowTextPosition(arrow, text_obj.text);
+  } else {
+    let arrow_position = { x: arrow.getX(), y: arrow.getY() };
+
+    let arrow_loop = arrow.getChildren(function (e) {
+      if (e.getClassName() === "Circle") return e;
+    })[0];
+    let arrow_loop_position = arrow_loop.getAbsolutePosition();
   }
 }
 
@@ -869,6 +927,7 @@ function circleClickEvent(e) {
       }
       //adds arrow between two distinct circles
       else {
+        /*
         temp_arrow.setPoints(
           calcPoints(
             selected_circle.getX(),
@@ -878,6 +937,9 @@ function circleClickEvent(e) {
             radius,
             radius
           )
+        );*/
+        temp_arrow.setPoints(
+          calcCircleArrowPoints(selected_circle, e.target, true)
         );
         temp_self_arrow.destroy();
 
@@ -1026,6 +1088,11 @@ function circleOutEvent(e) {
   e.target.radius(radius);
 
   switch (mode) {
+    case modes.INSERT.TRANSITION.TO: {
+      let arrow = arrows[e.target.id()][selected_circle.id()];
+      updateArrowPoints(arrow, e.target, selected_circle);
+      break;
+    }
     case modes.MARK.INITIAL: {
       if (temp_initial_arrow != null) {
         over_circle = null;
@@ -1096,6 +1163,7 @@ function circleDragMoveEvent(e) {
   //redraws arrows directed out of circle
   directed_out[id].forEach(function (other, n) {
     if (cur != other) {
+      /*
       let p = calcPoints(
         cur.getX(),
         cur.getY(),
@@ -1103,7 +1171,8 @@ function circleDragMoveEvent(e) {
         other.getY(),
         radius,
         radius
-      );
+      );*/
+      let p = calcCircleArrowPoints(cur, other);
       let arrow = arrows[id][other.id()];
       arrow.setPoints(p);
       updateArrowTextPosition(arrow, arrow_text[arrow.id()].text);
@@ -1113,6 +1182,7 @@ function circleDragMoveEvent(e) {
   //redraws arrows directed in to circle
   directed_in[id].forEach(function (other, n) {
     if (cur != other) {
+      /*
       let p = calcPoints(
         other.getX(),
         other.getY(),
@@ -1120,7 +1190,8 @@ function circleDragMoveEvent(e) {
         cur.getY(),
         radius,
         radius
-      );
+      );*/
+      let p = calcCircleArrowPoints(other, cur);
       let arrow = arrows[other.id()][id];
       arrow.setPoints(p);
       updateArrowTextPosition(arrow, arrow_text[arrow.id()].text);
