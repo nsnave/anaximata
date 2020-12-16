@@ -27,6 +27,7 @@ let mode = modes.SELECT;
 //ids
 let circle_ids = 0;
 let arrow_ids = 0;
+let text_ids = 0;
 
 //shared constants
 const stroke_color = "black";
@@ -51,8 +52,8 @@ const arrows = {}; //(circle1.id, circle2.id) -> arrow that points connects circ
 const circles = {}; //(arrow.id) -> { out: circle1, in: circle2 }
 const start_circles = {}; //(circle.id) -> initial arrow
 const end_circles = {}; //(circle.id) -> final sub-circle
-const arrow_text = {}; //(arrow.id) -> transition text
-
+const arrow_text = {}; //(arrow.id) -> {text: transition text object, corner: {x: x, y: y}, ratio: ratio for text position relative to arrow }
+const text_arrow = {}; //(text.id) -> arrow
 //stage constants
 let stage_left_offset = 250;
 let stage_right_offset = 32;
@@ -174,7 +175,8 @@ function removeArrow(arrow) {
   delete circles[arrow.id()];
   delete arrows[c.out.id()][c.in.id()];
 
-  if (arrow_text[arrow.id()] != undefined) arrow_text[arrow.id()].destroy();
+  if (arrow_text[arrow.id()] != undefined)
+    arrow_text[arrow.id()].text.destroy();
   delete arrow_text[arrow.id()];
 
   let index = directed_in[c.in.id()].indexOf(c.out);
@@ -200,8 +202,11 @@ function removeCircle(circle) {
       if (arrow != undefined) {
         delete circles[arrow.id()];
 
-        if (arrow_text[arrow.id()] != undefined)
-          arrow_text[arrow.id()].destroy();
+        if (arrow_text[arrow.id()] != undefined) {
+          let text = arrow_text[arrow.id()].text;
+          delete text_arrow[text.id()];
+          text.destroy();
+        }
         delete arrow_text[arrow.id()];
 
         arrow.destroy();
@@ -221,8 +226,11 @@ function removeCircle(circle) {
       if (arrow != undefined) {
         delete circles[arrow.id()];
 
-        if (arrow_text[arrow.id()] != undefined)
-          arrow_text[arrow.id()].destroy();
+        if (arrow_text[arrow.id()] != undefined) {
+          let text = arrow_text[arrow.id()].text;
+          delete text_arrow[text.id()];
+          text.destroy();
+        }
         delete arrow_text[arrow.id()];
 
         arrow.destroy();
@@ -512,14 +520,15 @@ function newFinalSubCircle(x, y) {
 }
 
 //calculates the position of the text for an arrow
-function calcArrowTextPosition(arrow, text) {
+function calcArrowTextPosition(arrow, text, offset_ratio) {
   //normal arrow
   if (arrow.name() === "arrow") {
     //calculates temporary midpoint of text
     let arrow_points = arrow.points();
 
     let arrow_mid = midpointArr(arrow_points);
-    let perp_uvec = perpUVecLine(arrow_points);
+    let para_uvec = uVecLine(arrow_points);
+    let perp_uvec = flipVec(perpUVec(para_uvec, true));
 
     let w = text.width();
     let h = text.height();
@@ -549,31 +558,30 @@ function calcArrowTextPosition(arrow, text) {
       closest_corner.y = text_mid.y - h / 2;
       top_corner = true;
     }
+    arrow_text[arrow.id()].corner = closest_corner;
 
     //calculates the linear equation for the arrow line
-    let arrow_line = {};
-    arrow_line.slope = slopeArr(arrow_points);
-    arrow_line.intercept = arrow_points[1] - arrow_line.slope * arrow_points[0];
+    let arrow_line = lineFromSlopeAndPoint(para_uvec.y / para_uvec.x, {
+      x: arrow_points[0],
+      y: arrow_points[1],
+    });
 
     //calculates the linear equation that passes through
     //  closest_corner and is perpindicular to the arrow line
-    let corner_line = {};
-    corner_line.slope = perp_uvec.y / perp_uvec.x;
-    corner_line.intercept =
-      closest_corner.y - corner_line.slope * closest_corner.x;
+    let corner_line = lineFromSlopeAndPoint(
+      perp_uvec.y / perp_uvec.x,
+      closest_corner
+    );
 
     //calculates the intersection of arrow_line and corner_line
-    let intersection = {};
-    intersection.x =
-      (corner_line.intercept - arrow_line.intercept) /
-      (arrow_line.slope - corner_line.slope);
-    intersection.y = arrow_line.slope * intersection.x + arrow_line.intercept;
+    let intersection = solveLinear2(arrow_line, corner_line);
 
     //calculates new position of the text
     let spacing = 4;
+    let offset = distArr(arrow_points) * offset_ratio;
     let new_corner_position = {
-      x: spacing * perp_uvec.x + intersection.x,
-      y: spacing * perp_uvec.y + intersection.y,
+      x: spacing * perp_uvec.x + offset * para_uvec.x + intersection.x,
+      y: spacing * perp_uvec.y + offset * para_uvec.y + intersection.y,
     };
 
     let x = left_corner ? new_corner_position.x : new_corner_position.x - w;
@@ -587,10 +595,60 @@ function calcArrowTextPosition(arrow, text) {
   }
 }
 
+//updates the position of the text for an arrow
 function updateArrowTextPosition(arrow, text) {
-  let text_position = calcArrowTextPosition(arrow, text);
+  let text_position = calcArrowTextPosition(
+    arrow,
+    text,
+    arrow_text[arrow.id()].ratio
+  );
   text.setX(text_position.x);
   text.setY(text_position.y);
+}
+
+//handles dragging the text of an arrow
+//  (updates the arrow text offset)
+function dragMoveArrowTextEvent(e) {
+  let arrow = text_arrow[e.target.id()];
+  let arrow_points = arrow.points();
+
+  let para_uvec = uVecLine(arrow_points);
+  let perp_uvec = flipVec(perpUVec(para_uvec, true));
+
+  let text_obj = arrow_text[arrow.id()];
+  let closest_corner = arrow_text[arrow.id()].corner;
+
+  let mouse_position = getCoords();
+
+  //calculates the line passing through the closest_corner
+  //  of the text with slope parallel to the arrow
+  let text_line = lineFromSlopeAndPoint(
+    para_uvec.y / para_uvec.x,
+    closest_corner
+  );
+
+  //calculates the line passing through the mouse position
+  //  of the text with slope perpendicular to the arrow
+  let mouse_line = lineFromSlopeAndPoint(
+    perp_uvec.y / perp_uvec.x,
+    mouse_position
+  );
+
+  //calculates the intersection of these lines
+  let intersection = solveLinear2(text_line, mouse_line);
+
+  //calculates the magnitude of the distance between
+  //    the intersection and the center of the text
+  let dist = distPoints(closest_corner, intersection);
+
+  //calculates the direction of the distance
+  let angle = atanPoints(closest_corner, intersection);
+  if (angle > 180) dist *= -1;
+  if (arrow_points[3] > arrow_points[1]) dist *= -1;
+
+  arrow_text[arrow.id()].ratio = dist / distArr(arrow_points);
+
+  updateArrowTextPosition(arrow, text_obj.text);
 }
 
 //variables for circle events
@@ -735,11 +793,18 @@ function circleClickEvent(e) {
           fontSize: 30,
           fontFamily: "Calibri",
           fill: "green",
+          id: text_ids++,
+          draggable: true,
         });
+        text_arrow[graphical_text.id()] = arrow;
+
+        arrow_text[arrow.id()] = {};
+        arrow_text[arrow.id()].text = graphical_text;
+        arrow_text[arrow.id()].ratio = 0;
 
         updateArrowTextPosition(arrow, graphical_text);
+        graphical_text.on("dragmove", dragMoveArrowTextEvent);
 
-        arrow_text[arrow.id()] = graphical_text;
         layer.add(graphical_text);
       }
 
@@ -937,7 +1002,7 @@ function circleDragMoveEvent(e) {
       );
       let arrow = arrows[id][other.id()];
       arrow.setPoints(p);
-      updateArrowTextPosition(arrow, arrow_text[arrow.id()]);
+      updateArrowTextPosition(arrow, arrow_text[arrow.id()].text);
     }
   });
 
@@ -954,7 +1019,7 @@ function circleDragMoveEvent(e) {
       );
       let arrow = arrows[other.id()][id];
       arrow.setPoints(p);
-      updateArrowTextPosition(arrow, arrow_text[arrow.id()]);
+      updateArrowTextPosition(arrow, arrow_text[arrow.id()].text);
     }
   });
   //handles temp_arrow if applicable

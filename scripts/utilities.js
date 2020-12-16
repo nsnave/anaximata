@@ -26,6 +26,12 @@ function distance(x1, y1, x2, y2) {
   let y = y2 - y1;
   return Math.sqrt(x * x + y * y);
 }
+function distPoints(p1, p2) {
+  return distance(p1.x, p1.y, p2.x, p2.y);
+}
+function distArr(points) {
+  return distance(points[0], points[1], points[2], points[3]);
+}
 
 //calculates midpoint of two points
 function midpoint(x1, y1, x2, y2) {
@@ -49,6 +55,10 @@ function atanDiff(dx, dy) {
 function atan(x1, y1, x2, y2) {
   return atanDiff(x2 - x1, y2 - y1);
 }
+function atanPoints(p1, p2) {
+  return atanDiff(p2.x - p1.x, p2.y - p1.y);
+}
+
 function atanArr(arr) {
   return atan(arr[0], arr[1], arr[2], arr[3]);
 }
@@ -61,24 +71,42 @@ function slopeArr(arr) {
   return slope(arr[0], arr[1], arr[2], arr[3]);
 }
 
+//flips a vector from one direction to another
+function flipVec(v) {
+  return { x: -v.x, y: -v.y };
+}
+
+//calculates magnitude of vector
+function vecMag(v) {
+  return Math.sqrt(v.x * v.x + v.y * v.y);
+}
+
 //calculates unit vector
 function uVec(v) {
-  let mag = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
-  return [v[0] / mag, v[1] / mag];
+  let mag = vecMag(v);
+  return { x: v.x / mag, y: v.y / mag };
+}
+function uVecLine(points) {
+  return uVec({ x: points[2] - points[0], y: points[3] - points[1] });
 }
 
 //calculates perpendicular unit vector
-//  input:  v = [x, y]
-function perpUVec(v) {
-  let px = -v[1];
-  let py = v[0];
-  let mag = Math.sqrt(px * px + py * py);
-
-  let upx = px / mag;
-  let upy = py / mag;
-
-  return { x: -upx, y: -upy };
+function perpUVec(v, is_uVec = false) {
+  let val = { x: -v.y, y: v.x };
+  return uVec(val);
 }
-function perpUVecLine(points) {
-  return perpUVec([points[2] - points[0], points[3] - points[1]]);
+function perpUVecLine(points, is_uVec = false) {
+  return perpUVec({ x: points[2] - points[0], y: points[3] - points[1] });
+}
+
+function solveLinear2(eq1, eq2) {
+  let intersection = {};
+  intersection.x = (eq2.intercept - eq1.intercept) / (eq1.slope - eq2.slope);
+  intersection.y = eq1.slope * intersection.x + eq1.intercept;
+
+  return intersection;
+}
+
+function lineFromSlopeAndPoint(slope, point) {
+  return { slope: slope, intercept: point.y - slope * point.x };
 }
