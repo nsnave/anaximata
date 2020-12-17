@@ -1089,8 +1089,10 @@ function circleOutEvent(e) {
 
   switch (mode) {
     case modes.INSERT.TRANSITION.TO: {
-      let arrow = arrows[e.target.id()][selected_circle.id()];
-      updateArrowPoints(arrow, e.target, selected_circle);
+      if (e.target != selected_circle) {
+        let arrow = arrows[e.target.id()][selected_circle.id()];
+        updateArrowPoints(arrow, e.target, selected_circle);
+      }
       break;
     }
     case modes.MARK.INITIAL: {
