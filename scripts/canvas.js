@@ -804,6 +804,7 @@ function textOutEvent(e) {
 function newArrowTextLabel(arrow, text) {
   text = text.replaceAll("\\e", String.fromCharCode(949));
   text = text.replaceAll("->", String.fromCharCode(8594));
+  text = text.replaceAll("\\n", "\n");
 
   let graphical_text = new Konva.Text({
     text: text,
@@ -812,6 +813,7 @@ function newArrowTextLabel(arrow, text) {
     fill: text_font_color,
     id: text_ids++,
     draggable: true,
+    fontStyle: "italic",
   });
   text_arrow[graphical_text.id()] = arrow;
 
