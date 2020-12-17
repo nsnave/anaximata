@@ -548,7 +548,6 @@ function newInitialArrow(x, y) {
   let group = new Konva.Group({
     x: x,
     y: y,
-    draggable: true,
     name: "initial-arrow",
   });
 
