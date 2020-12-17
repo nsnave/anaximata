@@ -647,7 +647,13 @@ function calcSelfArrowTextPosition(arrow, text) {
   let arrow_loop = arrow.getChildren(function (e) {
     if (e.getClassName() === "Circle") return e;
   })[0];
-  let arrow_loop_position = arrow_loop.getAbsolutePosition();
+
+  let temp_arrow_loop_position = arrow_loop.getAbsolutePosition();
+  let oldScale = stage.scaleX();
+  let arrow_loop_position = {
+    x: (temp_arrow_loop_position.x - stage.x()) / oldScale,
+    y: (temp_arrow_loop_position.y - stage.y()) / oldScale,
+  };
 
   let dist =
     distPoints(arrow_position, arrow_loop_position) +
@@ -812,10 +818,13 @@ function newArrowTextLabel(arrow, text) {
     fontFamily: text_font_family,
     fill: text_font_color,
     id: text_ids++,
-    draggable: true,
     fontStyle: "italic",
   });
   text_arrow[graphical_text.id()] = arrow;
+
+  if (arrow.name() === "arrow") {
+    graphical_text.setAttr("draggable", true);
+  }
 
   arrow_text[arrow.id()] = {};
   arrow_text[arrow.id()].text = graphical_text;
