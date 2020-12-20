@@ -65,11 +65,16 @@
 
           <label class="title">Transition Diagram Tools</label><cap></cap>
           <button id="select" class="mode_button">Select/Move Element</button>
-          <button id="insert_state" class="mode_button">Insert State</button>
+          <button id="insert_state" class="mode_button mode_button_active">
+            Insert State
+          </button>
           <button id="insert_transition" class="mode_button">
             Insert Transition
+            <div id="transition-text">
+              Text:
+              <input type="text" id="transition-textbox" />
+            </div>
           </button>
-          <input type="text" id="transition-textbox" />
           <button id="remove" class="mode_button">Remove Element</button>
           <button id="mark_initial" class="mode_button">
             Mark/Unmark Initial State
@@ -154,10 +159,10 @@
 
     <!-- Scripts -->
     <script type="text/javascript" src="scripts/utilities.js"></script>
+    <script type="text/javascript" src="scripts/sidenav.js"></script>
 
     <script type="text/javascript" src="scripts/canvas.js"></script>
 
-    <script type="text/javascript" src="scripts/sidenav.js"></script>
     <script type="text/javascript" src="scripts/options.js"></script>
     <script type="text/javascript" src="scripts/divider.js"></script>
     <script type="text/javascript" src="scripts/display.js"></script>

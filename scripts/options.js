@@ -27,3 +27,8 @@ for (let i = 0; i < mode_btns.length; i++) {
     this.classList.add("mode_button_active");
   });
 }
+
+let transition_textbox = document.getElementById("transition-textbox");
+transition_textbox.placeholder = String.fromCharCode(949) + ", a, b";
+
+changeMode(modes.INSERT.STATE);

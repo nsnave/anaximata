@@ -60,6 +60,9 @@ const start_circles = {}; //(circle.id) -> initial arrow
 const end_circles = {}; //(circle.id) -> final sub-circle
 const arrow_text = {}; //(arrow.id) -> {text: transition text object, corner: {x: x, y: y}, ratio: ratio for text position relative to arrow }
 const text_arrow = {}; //(text.id) -> arrow
+const circle_text = {}; //(circle.id) -> text
+const text_circle = {}; //(text.id) -> circle
+
 //stage constants
 let stage_left_offset = 250;
 let stage_right_offset = 32;
@@ -190,7 +193,7 @@ function calcCircleArrowPoints(
 
   let reverse = arrows[circle2.id()][circle1.id()];
   if (reverse != undefined) {
-    let shift = 10;
+    let shift = arrow_width * 2;
 
     let perp_uvec = perpUVecLine(base_arrow_points);
     let xshift = shift * -perp_uvec.x;
@@ -315,11 +318,93 @@ function removeCircle(circle) {
   }
 }
 
+let selected_arrow = null;
+
+function getSelfArrowArrowParts(arrow_group) {
+  let arrow = arrow_group.getChildren(function (e) {
+    if (e.getClassName() === "Arrow") return e;
+  })[0];
+
+  let arc = arrow_group.getChildren(function (e) {
+    if (e.getClassName() === "Arc") return e;
+  })[0];
+
+  let arrow_parts = {
+    arrow: arrow,
+    arc: arc,
+  };
+
+  return arrow_parts;
+}
+
+function clearSelectedArrow() {
+  if (selected_arrow != null) {
+    if (selected_arrow.name() === "arrow") {
+      selected_arrow.stroke(stroke_color);
+      selected_arrow.fill(stroke_color);
+    } else {
+      let arrow_parts = getSelfArrowArrowParts(selected_arrow);
+      arrow_parts.arc.stroke(stroke_color);
+      arrow_parts.arrow.stroke(stroke_color);
+      arrow_parts.arrow.fill(stroke_color);
+    }
+  }
+}
+
+function clearSelectedText() {
+  if (selected_text != null) {
+    selected_text.fill(text_font_color);
+  }
+}
+
+function clearSelectedCircle() {
+  if (selected_circle != null) {
+    selected_circle.stroke(stroke_color);
+  }
+}
+
+function colorSelectedArrow(stroke = "red", fill = "red") {
+  if (selected_arrow.name() === "arrow") {
+    selected_arrow.stroke(stroke);
+    selected_arrow.fill(fill);
+    selected_arrow.moveToTop();
+  } else {
+    let arrow_parts = getSelfArrowArrowParts(selected_arrow);
+    arrow_parts.arc.stroke(stroke);
+    arrow_parts.arrow.stroke(stroke);
+    arrow_parts.arrow.fill(fill);
+  }
+}
+
+function colorSelectedText(stroke = "red", fill = "red") {
+  selected_text.fill(fill);
+  selected_text.moveToTop();
+}
+
+function colorSelectedCircle(stroke = "red", fill = undefined) {
+  selected_circle.stroke(stroke);
+  selected_circle.fill(fill);
+  selected_circle.moveToTop();
+}
+
 //arrow event functions
 function arrowClickEvent(e) {
   switch (mode) {
     case modes.SELECT: {
-      console.log(arrow_text[e.target.id()]);
+      clearSelectedArrow();
+      clearSelectedCircle();
+      clearSelectedText();
+
+      //changes selected arrow to red
+      selected_arrow = e.target;
+      colorSelectedArrow();
+
+      //changes corresponding text to red
+      selected_text = arrow_text[selected_arrow.id()].text;
+      colorSelectedText();
+
+      layer.draw();
+
       break;
     }
     case modes.REMOVE: {
@@ -391,12 +476,33 @@ function selfArrowAngle(mouse_x, mouse_y, circle_x, circle_y) {
 
 //self-arrow event functions
 function selfArrowClickEvent(e) {
-  if (mode == modes.REMOVE) {
-    removeArrow(e.target.parent);
+  switch (mode) {
+    case modes.SELECT: {
+      clearSelectedArrow();
+      clearSelectedCircle();
+      clearSelectedText();
 
-    e.target.parent.destroy();
+      //changes selected arrow to red
+      selected_arrow = e.target.parent;
+      colorSelectedArrow();
 
-    layer.draw();
+      //changes corresponding text to red
+      selected_text = arrow_text[selected_arrow.id()].text;
+      colorSelectedText();
+
+      layer.draw();
+
+      break;
+    }
+    case modes.REMOVE: {
+      removeArrow(e.target.parent);
+
+      e.target.parent.destroy();
+
+      layer.draw();
+
+      break;
+    }
   }
 }
 
@@ -659,7 +765,6 @@ function calcSelfArrowTextPosition(arrow, text) {
     self_arrow_radius +
     arrow_width;
   let uvec = uVecPoints(arrow_position, arrow_loop_position);
-  console.log(uvec);
   let perp_uvec = perpUVec(uvec, true);
 
   let reference = {
@@ -785,8 +890,30 @@ function textDragMoveArrowEvent(e) {
   }
 }
 
+let selected_text = null;
+
 //handles when mouse clicks text
-function textClickEvent(e) {}
+function textClickEvent(e) {
+  switch (mode) {
+    case modes.SELECT: {
+      clearSelectedCircle();
+      clearSelectedArrow();
+      clearSelectedText();
+
+      //changes selected text to red
+      selected_text = e.target;
+      colorSelectedText();
+
+      //changes corersponding arrow to red
+      selected_arrow = text_arrow[selected_text.id()];
+      colorSelectedArrow();
+
+      layer.draw();
+
+      break;
+    }
+  }
+}
 
 //handles when hovering over text
 function textOverEvent(e) {
@@ -831,7 +958,7 @@ function newArrowTextLabel(arrow, text) {
 
   updateArrowTextPosition(arrow, graphical_text);
   graphical_text.on("dragmove", textDragMoveArrowEvent);
-  graphical_text.on("mouseclick", textClickEvent);
+  graphical_text.on("click", textClickEvent);
   graphical_text.on("mouseover", textOverEvent);
   graphical_text.on("mouseout", textOutEvent);
 
@@ -854,12 +981,18 @@ function changeMode(new_mode) {
   //console.log(new_mode);
   if (mode == modes.SELECT) {
     if (selected_circle != null) {
-      selected_circle.stroke(stroke_color);
-
+      clearSelectedCircle();
       selected_circle = null;
-
-      layer.draw();
     }
+    if (selected_arrow != null) {
+      clearSelectedArrow();
+      selected_arrow = null;
+    }
+    if (selected_text != null) {
+      clearSelectedText();
+      selected_text = null;
+    }
+    layer.draw();
   } else if (mode == modes.MARK.INITIAL) {
     over_circle = null;
   }
@@ -884,14 +1017,13 @@ function changeMode(new_mode) {
 function circleClickEvent(e) {
   switch (mode) {
     case modes.SELECT: {
-      //changes selected circle to red
-      if (selected_circle != null) {
-        selected_circle.stroke(stroke_color);
-      }
-      selected_circle = e.target;
+      clearSelectedCircle();
+      clearSelectedArrow();
+      clearSelectedText();
 
-      selected_circle.stroke("red");
-      selected_circle.moveToTop();
+      //changes selected circle to red
+      selected_circle = e.target;
+      colorSelectedCircle();
 
       layer.draw();
 
@@ -979,6 +1111,8 @@ function circleClickEvent(e) {
 
         //adds transition text
         let text = document.getElementById("transition-textbox").value;
+        if (text === "") text = "\\e";
+
         let graphical_text = newArrowTextLabel(arrow, text);
         layer.add(graphical_text);
       }
