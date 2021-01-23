@@ -140,19 +140,67 @@
         >&laquo;</a
       >
       <div id="display">
-        <button class="accordion">Section 1</button>
-        <div class="panel">
-          <p>Lorem ipsum...</p>
+        <div id="selection-display">
+          <button
+            id="selection-title"
+            class="accordion accordion_active_default"
+          >
+            Selection Data
+          </button>
+          <div id="selection-panels" class="panel panel_open_default">
+            <div id="finite-transition-panel" class="selection-panel">
+              <p>dfa</p>
+            </div>
+            <div id="push-down-transition-panel" class="selection-panel">
+              <p>pda</p>
+            </div>
+            <div id="turing-transition-panel" class="selection-panel">
+              <p>turing</p>
+            </div>
+            <div id="state-panel" class="selection-panel"></div>
+            <div id="graph-edge-panel" class="selection-panel"></div>
+            <div id="vertex-panel" class="selection-panel"></div>
+          </div>
         </div>
 
-        <button class="accordion">Section 2</button>
-        <div class="panel">
-          <p>Lorem ipsum...</p>
-        </div>
+        <div id="main-displays">
+          <div id="automata-main-display" class="main-display">
+            <button class="accordion accordion_active_default">
+              General Information
+            </button>
+            <div class="panel panel_open_default">
+              <p>information...</p>
+            </div>
 
-        <button class="accordion">Section 3</button>
-        <div class="panel">
-          <p>Lorem ipsum...</p>
+            <button class="accordion">Algorithms</button>
+            <div class="panel">
+              <p>something else...</p>
+            </div>
+
+            <button class="accordion">Section 3</button>
+            <div class="panel">
+              <p>something...</p>
+            </div>
+          </div>
+
+          <div id="graph-main-display" class="main-display">
+            <button class="accordion accordion_active_default">
+              General Information
+            </button>
+            <div class="panel panel_open_default">
+              <p>graph stuff...</p>
+            </div>
+
+            <button class="accordion">Algorithms</button>
+            <div class="panel">
+              <p>more stuff...</p>
+            </div>
+
+            <button class="accordion">Section 3</button>
+            <div class="panel">
+              <p>stuff...</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

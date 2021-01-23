@@ -337,7 +337,8 @@ function getSelfArrowArrowParts(arrow_group) {
   return arrow_parts;
 }
 
-function clearSelectedArrow() {
+//removes all highlighting from the currently selected arrow
+function clearSelectedArrow(setNull = false) {
   if (selected_arrow != null) {
     if (selected_arrow.name() === "arrow") {
       selected_arrow.stroke(stroke_color);
@@ -348,21 +349,34 @@ function clearSelectedArrow() {
       arrow_parts.arrow.stroke(stroke_color);
       arrow_parts.arrow.fill(stroke_color);
     }
+    if (setNull) selected_arrow = null;
   }
 }
 
-function clearSelectedText() {
+//removes all highlighting from the currently selected text
+function clearSelectedText(setNull = false) {
   if (selected_text != null) {
     selected_text.fill(text_font_color);
+    if (setNull) selected_text = null;
   }
 }
 
-function clearSelectedCircle() {
+//removes all highlighting from the currently selected circle
+function clearSelectedCircle(setNull = false) {
   if (selected_circle != null) {
     selected_circle.stroke(stroke_color);
+    if (setNull) selected_circle = null;
   }
 }
 
+//clears all possible elements of selection
+function clearSelections(setNull = false) {
+  clearSelectedArrow(setNull);
+  clearSelectedText(setNull);
+  clearSelectedCircle(setNull);
+}
+
+//changes the color of the currently selected arrow
 function colorSelectedArrow(stroke = "red", fill = "red") {
   if (selected_arrow.name() === "arrow") {
     selected_arrow.stroke(stroke);
@@ -376,24 +390,86 @@ function colorSelectedArrow(stroke = "red", fill = "red") {
   }
 }
 
+//changes the color of the currently selected text
 function colorSelectedText(stroke = "red", fill = "red") {
   selected_text.fill(fill);
   selected_text.moveToTop();
 }
 
+//changes the color of the currently selected circle
 function colorSelectedCircle(stroke = "red", fill = undefined) {
   selected_circle.stroke(stroke);
   selected_circle.fill(fill);
   selected_circle.moveToTop();
 }
 
+//hides the main display
+function hideMainDisplays() {
+  let main_displays = document.getElementsByClassName("main-display");
+  for (let i = 0; i < main_displays.length; i++) {
+    main_displays[i].style.display = "none";
+  }
+}
+
+//hide selection panels
+function hideSelectionDisplays() {
+  let selection_panels = document.getElementsByClassName("selection-panel");
+  for (let i = 0; i < selection_panels.length; i++) {
+    selection_panels[i].style.display = "none";
+  }
+}
+
+function openSelectionDisplay() {
+  //hides main display
+  document.getElementById("main-displays").style.display = "none";
+
+  //shows selection display
+  document.getElementById("selection-display").style.display = "block";
+
+  document.getElementById("selection-title").classList.add("accordion_active");
+
+  let panel = document.getElementById("selection-panels");
+  panel.style.maxHeight = panel.scrollHeight + "px";
+}
+
+//displays circle metadata on the rightnav display
+function openCircleDisplay(circle) {}
+
+//displays circle metadata on the rightnav display
+function openArrowDisplay(arrow, text) {
+  //hides all selection display panels
+  hideSelectionDisplays();
+
+  //opens appropriate selection panel
+  if (document.getElementById("type").value === "automata") {
+    let machine_model = document.getElementById("model").value;
+    let panel = document.getElementById(machine_model + "-transition-panel");
+    panel.style.display = "block";
+  }
+
+  //opens the selection display
+  openSelectionDisplay();
+}
+
+//displays the main display
+//  includes data for the diagram as a whole
+function openMainDisplay() {
+  //hides selection display
+  document.getElementById("selection-display").style.display = "none";
+
+  //shows main display
+  document.getElementById("main-displays").style.display = "block";
+
+  //shows the current main display
+  let type = document.getElementById("type").value;
+  document.getElementById(type + "-main-display").style.display = "block";
+}
+
 //arrow event functions
 function arrowClickEvent(e) {
   switch (mode) {
     case modes.SELECT: {
-      clearSelectedArrow();
-      clearSelectedCircle();
-      clearSelectedText();
+      clearSelections();
 
       //changes selected arrow to red
       selected_arrow = e.target;
@@ -402,6 +478,8 @@ function arrowClickEvent(e) {
       //changes corresponding text to red
       selected_text = arrow_text[selected_arrow.id()].text;
       colorSelectedText();
+
+      openArrowDisplay(selected_arrow, selected_text);
 
       layer.draw();
 
@@ -478,9 +556,7 @@ function selfArrowAngle(mouse_x, mouse_y, circle_x, circle_y) {
 function selfArrowClickEvent(e) {
   switch (mode) {
     case modes.SELECT: {
-      clearSelectedArrow();
-      clearSelectedCircle();
-      clearSelectedText();
+      clearSelections();
 
       //changes selected arrow to red
       selected_arrow = e.target.parent;
@@ -489,6 +565,8 @@ function selfArrowClickEvent(e) {
       //changes corresponding text to red
       selected_text = arrow_text[selected_arrow.id()].text;
       colorSelectedText();
+
+      openArrowDisplay(selected_arrow, selected_text);
 
       layer.draw();
 
@@ -881,12 +959,14 @@ function textDragMoveArrowEvent(e) {
 
     updateArrowTextPosition(arrow, text_obj.text);
   } else {
+    /*
     let arrow_position = { x: arrow.getX(), y: arrow.getY() };
 
     let arrow_loop = arrow.getChildren(function (e) {
       if (e.getClassName() === "Circle") return e;
     })[0];
     let arrow_loop_position = arrow_loop.getAbsolutePosition();
+    */
   }
 }
 
@@ -896,9 +976,7 @@ let selected_text = null;
 function textClickEvent(e) {
   switch (mode) {
     case modes.SELECT: {
-      clearSelectedCircle();
-      clearSelectedArrow();
-      clearSelectedText();
+      clearSelections();
 
       //changes selected text to red
       selected_text = e.target;
@@ -907,6 +985,8 @@ function textClickEvent(e) {
       //changes corersponding arrow to red
       selected_arrow = text_arrow[selected_text.id()];
       colorSelectedArrow();
+
+      openArrowDisplay(selected_arrow, selected_text);
 
       layer.draw();
 
@@ -980,18 +1060,7 @@ let temp_final_subcircle = null;
 function changeMode(new_mode) {
   //console.log(new_mode);
   if (mode == modes.SELECT) {
-    if (selected_circle != null) {
-      clearSelectedCircle();
-      selected_circle = null;
-    }
-    if (selected_arrow != null) {
-      clearSelectedArrow();
-      selected_arrow = null;
-    }
-    if (selected_text != null) {
-      clearSelectedText();
-      selected_text = null;
-    }
+    clearSelections(true);
     layer.draw();
   } else if (mode == modes.MARK.INITIAL) {
     over_circle = null;
@@ -1017,13 +1086,13 @@ function changeMode(new_mode) {
 function circleClickEvent(e) {
   switch (mode) {
     case modes.SELECT: {
-      clearSelectedCircle();
-      clearSelectedArrow();
-      clearSelectedText();
+      clearSelections();
 
       //changes selected circle to red
       selected_circle = e.target;
       colorSelectedCircle();
+
+      openCircleDisplay(selected_circle);
 
       layer.draw();
 
@@ -1403,12 +1472,25 @@ function newCircle(is_hover = false) {
 }
 
 //adds circle to stage on click of stage if mode = modes.INSERT.STATE
-stage.on("click", function () {
-  if (mode == modes.INSERT.STATE) {
-    let circle = newCircle();
+stage.on("click", function (e) {
+  switch (mode) {
+    case modes.SELECT: {
+      if (e.target.getClassName() === "Stage") {
+        clearSelections(true);
+        openMainDisplay();
 
-    layer.add(circle);
-    layer.draw();
+        layer.draw();
+      }
+      break;
+    }
+    case modes.INSERT.STATE: {
+      let circle = newCircle();
+
+      layer.add(circle);
+
+      layer.draw();
+      break;
+    }
   }
 });
 

@@ -1,8 +1,8 @@
 //initializes options form
-let type = document.getElementById("automata");
-type.style.maxHeight = type.scrollHeight + "px";
+let type_selector = document.getElementById("automata");
+type_selector.style.maxHeight = type_selector.scrollHeight + "px";
 
-//handles changing the type (graph, transition digrapm, etc.)
+//handles changing the type (graph, transition diagrams, etc.)
 document.getElementById("type").addEventListener("change", function () {
   let s = document.getElementById("type");
   let opt = s.options;
@@ -13,6 +13,15 @@ document.getElementById("type").addEventListener("change", function () {
 
   let val = document.getElementById(s.value);
   val.style.maxHeight = val.scrollHeight + "px";
+
+  hideMainDisplays();
+  openMainDisplay();
+});
+
+//handles changing the machine model for transition diagrams
+document.getElementById("model").addEventListener("change", function () {
+  openMainDisplay();
+  clearSelections(true);
 });
 
 //handles changing color of selected tool button
