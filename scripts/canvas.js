@@ -27,7 +27,8 @@ let mode = modes.SELECT;
 //ids
 let circle_ids = 0;
 let arrow_ids = 0;
-let text_ids = 0;
+let text_arrow_ids = 0;
+let text_circle_ids = 0;
 
 //shared constants
 const stroke_color = "black";
@@ -45,8 +46,10 @@ const pointer_width = 10;
 const initial_arrow_length = radius;
 
 //text constants for arrow labels
-const text_font_size = 28;
-const text_font_size_hover = 32;
+const text_font_size_arrow = 28;
+const text_font_size_hover_arrow = 32;
+const text_font_size_circle = 48;
+const text_font_size_hover_circle = 52;
 const text_font_color = "black";
 const text_font_family = "Calibri";
 
@@ -250,8 +253,15 @@ function removeArrow(arrow) {
   directed_out[c.out.id()].splice(index, 1);
 }
 
-//removes a circle and destroys the associated arrows
+//removes a circle
 function removeCircle(circle) {
+  //destroys the associated text label
+  let ctext = circle_text[circle.id()];
+  delete text_circle[ctext.id()];
+  delete circle_text[circle.id()];
+  ctext.destroy();
+
+  //destroys the associated arrows
   let in_circles = directed_in[circle.id()];
   let out_circles = directed_out[circle.id()];
 
@@ -972,8 +982,25 @@ function textDragMoveArrowEvent(e) {
 
 let selected_text = null;
 
+//handles when hovering over text
+function textOverArrowEvent(e) {
+  if (mode == modes.SELECT) {
+    e.target.fontSize(text_font_size_hover_arrow);
+    updateArrowTextPosition(text_arrow[e.target.id()], e.target);
+    layer.draw();
+  }
+}
+
+function textOutArrowEvent(e) {
+  if (mode == modes.SELECT) {
+    e.target.fontSize(text_font_size_arrow);
+    updateArrowTextPosition(text_arrow[e.target.id()], e.target);
+    layer.draw();
+  }
+}
+
 //handles when mouse clicks text
-function textClickEvent(e) {
+function textClickArrowEvent(e) {
   switch (mode) {
     case modes.SELECT: {
       clearSelections();
@@ -995,23 +1022,6 @@ function textClickEvent(e) {
   }
 }
 
-//handles when hovering over text
-function textOverEvent(e) {
-  if (mode == modes.SELECT) {
-    e.target.fontSize(text_font_size_hover);
-    updateArrowTextPosition(text_arrow[e.target.id()], e.target);
-    layer.draw();
-  }
-}
-
-function textOutEvent(e) {
-  if (mode == modes.SELECT) {
-    e.target.fontSize(text_font_size);
-    updateArrowTextPosition(text_arrow[e.target.id()], e.target);
-    layer.draw();
-  }
-}
-
 //creates a new text label for an arrow
 function newArrowTextLabel(arrow, text) {
   text = text.replaceAll("\\e", String.fromCharCode(949));
@@ -1020,10 +1030,10 @@ function newArrowTextLabel(arrow, text) {
 
   let graphical_text = new Konva.Text({
     text: text,
-    fontSize: text_font_size,
+    fontSize: text_font_size_arrow,
     fontFamily: text_font_family,
     fill: text_font_color,
-    id: text_ids++,
+    id: text_arrow_ids++,
     fontStyle: "italic",
   });
   text_arrow[graphical_text.id()] = arrow;
@@ -1038,9 +1048,36 @@ function newArrowTextLabel(arrow, text) {
 
   updateArrowTextPosition(arrow, graphical_text);
   graphical_text.on("dragmove", textDragMoveArrowEvent);
-  graphical_text.on("click", textClickEvent);
-  graphical_text.on("mouseover", textOverEvent);
-  graphical_text.on("mouseout", textOutEvent);
+  graphical_text.on("click", textClickArrowEvent);
+  graphical_text.on("mouseover", textOverArrowEvent);
+  graphical_text.on("mouseout", textOutArrowEvent);
+
+  return graphical_text;
+}
+
+//updates the position of the text for a circle
+function updateCircleTextPosition(circle, text) {
+  text.setX(circle.getX() - text.width() / 2 - 1);
+  text.setY(circle.getY() - text.height() / 2 + 2);
+}
+
+//creates a new text label for a circle
+function newCircleTextLabel(circle, text) {
+  text = text.replaceAll("\\e", String.fromCharCode(949));
+
+  let graphical_text = new Konva.Text({
+    text: text,
+    fontSize: text_font_size_circle,
+    fontFamily: text_font_family,
+    fill: text_font_color,
+    id: text_circle_ids++,
+    fontStyle: "italic",
+  });
+  text_circle[graphical_text.id()] = circle;
+
+  circle_text[circle.id()] = graphical_text;
+
+  updateCircleTextPosition(circle, graphical_text);
 
   return graphical_text;
 }
@@ -1091,6 +1128,10 @@ function circleClickEvent(e) {
       //changes selected circle to red
       selected_circle = e.target;
       colorSelectedCircle();
+
+      selected_text = circle_text[e.target.id()];
+      colorSelectedText();
+      selected_text.moveToBottom();
 
       openCircleDisplay(selected_circle);
 
@@ -1289,6 +1330,11 @@ function circleOverEvent(e) {
 
   if (mode != modes.MARK.INITIAL && mode != modes.MARK.FINAL) {
     e.target.radius(radius + 5);
+
+    let ctext = circle_text[e.target.id()];
+    ctext.fontSize(text_font_size_hover_circle);
+    updateCircleTextPosition(e.target, ctext);
+    ctext.moveToBottom();
   }
 
   layer.draw();
@@ -1299,6 +1345,11 @@ function circleOutEvent(e) {
 
   hovering = false;
   e.target.radius(radius);
+
+  let ctext = circle_text[e.target.id()];
+  ctext.fontSize(text_font_size_circle);
+  updateCircleTextPosition(e.target, ctext);
+  ctext.moveToBottom();
 
   switch (mode) {
     case modes.INSERT.TRANSITION.TO: {
@@ -1358,10 +1409,12 @@ function circleMouseUpEvent(e) {
   }
 }
 
-//redraws the arrows as circle moves
+//redraws the arrows and updates text positions as circle moves
 function circleDragMoveEvent(e) {
   let cur = e.target;
   let id = cur.id();
+
+  updateCircleTextPosition(cur, circle_text[id]);
 
   //redraws self-arrow
   let self_arrow = arrows[id][id];
@@ -1466,6 +1519,11 @@ function newCircle(is_hover = false) {
     circle.on("mouseup", circleMouseUpEvent);
     circle.on("click", circleClickEvent);
     circle.on("dragmove", circleDragMoveEvent);
+
+    //adds state text
+    let text = document.getElementById("state-textbox").value;
+    let graphical_text = newCircleTextLabel(circle, text);
+    layer.add(graphical_text);
   }
 
   return circle;

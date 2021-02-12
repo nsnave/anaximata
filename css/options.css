@@ -74,17 +74,12 @@ option {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-#transition-text {
+.label-textbox {
   width: 100%;
   display: inline-block;
   font-size: 14px;
   padding-left: 12px;
   color: #555;
-}
-#transition-text label {
-  float: left;
-  vertical-align: middle;
-  text-align: center;
 }
 
 .mode_button {

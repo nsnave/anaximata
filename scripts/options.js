@@ -40,4 +40,7 @@ for (let i = 0; i < mode_btns.length; i++) {
 let transition_textbox = document.getElementById("transition-textbox");
 transition_textbox.placeholder = String.fromCharCode(949) + ", a, b";
 
+let state_textbox = document.getElementById("state-textbox");
+state_textbox.placeholder = "0, 1, 2, A, B, ...";
+
 changeMode(modes.INSERT.STATE);
