@@ -1120,7 +1120,7 @@ function changeMode(new_mode) {
 }
 
 //circle event functions
-function circleClickEvent(e) {
+function circleClickEventHandler(e, touch) {
   switch (mode) {
     case modes.SELECT: {
       clearSelections();
@@ -1149,8 +1149,13 @@ function circleClickEvent(e) {
       let x = e.target.getX();
       let y = e.target.getY();
       temp_self_arrow = newSelfArrow(x, y);
-      layer.add(temp_self_arrow);
-      temp_self_arrow.moveToBottom();
+
+      if (touch) {
+        colorSelectedCircle();
+      } else {
+        layer.add(temp_self_arrow);
+        temp_self_arrow.moveToBottom();
+      }
 
       hovering = true;
       self_hovering = true;
@@ -1168,8 +1173,10 @@ function circleClickEvent(e) {
       let in_circle = null;
       let arrow = null;
 
+      if (touch) clearSelections();
+
       //adds self-referencing arrow
-      if (self_hovering) {
+      if (selected_circle.id() == e.target.id()) {
         temp_self_arrow.setX(selected_circle.getX());
         temp_self_arrow.setY(selected_circle.getY());
         temp_arrow.destroy();
@@ -1212,6 +1219,7 @@ function circleClickEvent(e) {
       } else {
         //assings arrow an id
         arrow.setAttr("id", arrow_ids++);
+        layer.add(arrow);
 
         //adds circles and arrow to the adjaceny lists
         directed_out[out_circle.id()].push(in_circle);
@@ -1283,6 +1291,14 @@ function circleClickEvent(e) {
   }
 
   updateDisplay();
+}
+
+function circleClickEvent(e) {
+  circleClickEventHandler(e, false);
+}
+
+function circleTapEvent(e) {
+  circleClickEventHandler(e, true);
 }
 
 function circleOverEvent(e) {
@@ -1519,6 +1535,7 @@ function newCircle(is_hover = false) {
     circle.on("mouseup", circleMouseUpEvent);
     circle.on("click", circleClickEvent);
     circle.on("dragmove", circleDragMoveEvent);
+    circle.on("tap", circleTapEvent);
 
     //adds state text
     let text = document.getElementById("state-textbox").value;
@@ -1678,6 +1695,49 @@ stage.on("mouseup", function () {
     layer.draw();
   }
 });
+
+//handles touchscreen events
+stage.on("tap", function () {
+  switch (mode) {
+    case modes.INSERT.STATE: {
+      let circle = newCircle();
+      layer.add(circle);
+
+      layer.draw();
+
+      break;
+    }
+  }
+});
+
+/*
+stage.on("touchstart", function () {
+  switch (mode) {
+    case modes.INSERT.STATE: {
+      hover_circle = newCircle(true);
+      hover_circle.radius(radius - 5);
+
+      layer.add(hover_circle);
+      layer.draw();
+      break;
+    }
+  }
+});
+
+stage.on("touchend", function () {
+  switch (mode) {
+    case modes.INSERT.STATE: {
+      hover_circle.destroy();
+
+      let circle = newCircle();
+      layer.add(circle);
+
+      layer.draw();
+      break;
+    }
+  }
+});
+*/
 
 stage.add(layer);
 
