@@ -1304,7 +1304,7 @@ function circleClickEventHandler(e, touch) {
 
         //adds transition text
         let text = document.getElementById("transition-textbox").value;
-        if (text === "") text = "\\e";
+        //if (text === "") text = "\\e";
 
         let graphical_text = newArrowTextLabel(arrow, text);
         layer.add(graphical_text);
