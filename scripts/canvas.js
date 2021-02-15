@@ -73,6 +73,8 @@ let stage_right_offset = 32;
 let stage_top_offset = 0;
 let stage_bottom_offset = 0;
 
+Konva.hitOnDragEnabled = true; //enabled for touchsc
+
 const stage = new Konva.Stage({
   container: "canvas",
   width: window.innerWidth - stage_left_offset - stage_right_offset,
@@ -137,6 +139,79 @@ stage.on("wheel", (e) => {
   };
   stage.position(newPos);
   stage.batchDraw();
+});
+
+//handles zooming via pinch on touchscreens
+//  initial src: https://konvajs.org/docs/sandbox/Multi-touch_Scale_Stage.html
+
+let lastCenter = null;
+let lastDist = 0;
+
+stage.on("touchmove", function (e) {
+  e.evt.preventDefault();
+
+  let touch1 = e.evt.touches[0];
+  let touch2 = e.evt.touches[1];
+
+  if (touch1 && touch2) {
+    // if the stage was under Konva's drag&drop
+    // we need to stop it, and implement our own pan logic with two pointers
+    if (stage.isDragging()) {
+      stage.stopDrag();
+    }
+
+    let p1 = {
+      x: touch1.clientX,
+      y: touch1.clientY,
+    };
+    let p2 = {
+      x: touch2.clientX,
+      y: touch2.clientY,
+    };
+
+    if (!lastCenter) {
+      lastCenter = midpointPoints(p1, p2);
+      return;
+    }
+    let newCenter = midpointPoints(p1, p2);
+
+    let dist = distPoints(p1, p2);
+
+    if (!lastDist) {
+      lastDist = dist;
+    }
+
+    // local coordinates of center point
+    let pointTo = {
+      x: (newCenter.x - stage.x()) / stage.scaleX(),
+      y: (newCenter.y - stage.y()) / stage.scaleX(),
+    };
+
+    var scale = stage.scaleX() * (dist / lastDist);
+
+    stage.scaleX(scale);
+    stage.scaleY(scale);
+
+    // calculate new position of the stage
+    let dx = newCenter.x - lastCenter.x;
+    let dy = newCenter.y - lastCenter.y;
+
+    let newPos = {
+      x: newCenter.x - pointTo.x * scale + dx,
+      y: newCenter.y - pointTo.y * scale + dy,
+    };
+
+    stage.position(newPos);
+    stage.batchDraw();
+
+    lastDist = dist;
+    lastCenter = newCenter;
+  }
+});
+
+stage.on("touchend", function () {
+  lastDist = 0;
+  lastCenter = null;
 });
 
 //gets the coordinates of the mouse relative to the stage

@@ -42,6 +42,9 @@ function midpoint(x1, y1, x2, y2) {
 function midpointArr(arr) {
   return midpoint(arr[0], arr[1], arr[2], arr[3]);
 }
+function midpointPoints(p1, p2) {
+  return midpoint(p1.x, p1.y, p2.x, p2.y);
+}
 
 //calculates inverse tangent of two points
 function atanDiff(dx, dy) {
