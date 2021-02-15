@@ -11,6 +11,7 @@ function resetTransitionSpeeds() {
   document.getElementById("rightsidenav").style.transition = "0.5s";
   document.getElementById("graphics").style.transition = "0.5s";
   document.getElementById("display").style.transition = "0.5s";
+  document.getElementById("options").style.transition = "0.5s";
 }
 
 function openLeftNav() {

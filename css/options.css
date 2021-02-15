@@ -1,14 +1,14 @@
 #options {
-  position: fixed;
-  height: 100%;
+  position: relative;
+  margin-bottom: 0;
   width: 250px;
   white-space: normal;
   transition: 0.5s;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 .option-content {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.25s ease-in-out;
+  /*transition: max-height 0.25s ease-in-out;*/
 }
 
 label.title {
@@ -80,6 +80,10 @@ option {
   font-size: 14px;
   padding-left: 12px;
   color: #555;
+}
+
+input[type="text"] {
+  width: 140px;
 }
 
 .mode_button {
