@@ -3,4 +3,4 @@ A graphical tool for the creation of transition diagrams and graphs, allowing fo
 
 (Currently still under construction but the transition diagram GUI is mostly complete.)
 
-[Demo Link](https://www.aidantevans.com/anaxi.html)
+[Demo Link](https://www.aidantevans.com/anaximata.html)
