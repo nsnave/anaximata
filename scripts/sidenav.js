@@ -26,9 +26,12 @@ function openLeftNav() {
 
   document.getElementById("options").style.marginLeft = 0;
 
-  var btn = document.getElementById("leftnavbtn");
+  let btn = document.getElementById("leftnavbtn");
   btn.setAttribute("onClick", "closeLeftNav()");
   btn.innerHTML = "&laquo";
+
+  let dwnbtn = document.getElementById("downloadbtn");
+  dwnbtn.style.display = "block";
 }
 
 function closeLeftNav() {
@@ -42,9 +45,12 @@ function closeLeftNav() {
 
   document.getElementById("options").style.marginLeft = -left_open_width + "px";
 
-  var btn = document.getElementById("leftnavbtn");
+  let btn = document.getElementById("leftnavbtn");
   btn.setAttribute("onClick", "openLeftNav()");
   btn.innerHTML = "&raquo";
+
+  let dwnbtn = document.getElementById("downloadbtn");
+  dwnbtn.style.display = "none";
 }
 
 function openRightNav() {

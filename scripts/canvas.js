@@ -1841,3 +1841,21 @@ document.getElementById("mark_initial").addEventListener("click", function () {
 document.getElementById("mark_final").addEventListener("click", function () {
   changeMode(modes.MARK.FINAL);
 });
+
+// Functions to download canvas as image:
+// main src:           https://konvajs.org/docs/data_and_serialization/High-Quality-Export.html
+// downloadURI() from: https://stackoverflow.com/a/15832662/512042
+function downloadURI(uri, name) {
+  let link = document.createElement("a");
+  link.download = name;
+  link.href = uri;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  delete link;
+}
+
+function downloadCanvas() {
+  let dataURL = stage.toDataURL({ pixelRatio: 3 });
+  downloadURI(dataURL, "diagram.png");
+}
