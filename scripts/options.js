@@ -71,10 +71,12 @@ document.getElementById("type").addEventListener("change", function () {
 });
 
 //handles changing the machine model for transition diagrams
+/*
 document.getElementById("model").addEventListener("change", function () {
   openMainDisplay();
   clearSelections(true);
 });
+*/
 
 //handles changing color of selected tool button
 let mode_btns = document.getElementsByClassName("mode_button");

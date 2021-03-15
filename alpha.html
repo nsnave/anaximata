@@ -56,19 +56,20 @@
         <label class="title">Type</label><cap></cap>
         <select id="type">
           <option value="automata">Transition Diagram</option>
-          <option value="graph">Graph</option>
+          <!--<option value="graph">Graph</option>-->
         </select>
         <br /><br /><br />
 
         <!-- Transition Diagram Options -->
         <div id="automata" class="option-content">
+          <!--
           <label class="title">Machine Model</label><cap></cap>
           <select id="model">
             <option value="finite">DFA/NFA/&epsilon;-NFA</option>
             <option value="push-down">PDA</option>
             <option value="turing">Turing Machine</option>
           </select>
-          <br /><br />
+          <br /><br />-->
 
           <label class="title">Transition Diagram Tools</label><cap></cap>
           <button id="select" class="mode_button">Select/Move Element</button>
@@ -159,14 +160,8 @@
             Selection Data
           </button>
           <div id="selection-panels" class="panel panel_open_default">
-            <div id="finite-transition-panel" class="selection-panel">
-              <p>dfa</p>
-            </div>
-            <div id="push-down-transition-panel" class="selection-panel">
-              <p>pda</p>
-            </div>
-            <div id="turing-transition-panel" class="selection-panel">
-              <p>turing</p>
+            <div id="transition-panel" class="selection-panel">
+              <p>transition</p>
             </div>
             <div id="state-panel" class="selection-panel"></div>
             <div id="graph-edge-panel" class="selection-panel"></div>

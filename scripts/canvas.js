@@ -527,8 +527,7 @@ function openArrowDisplay(arrow, text) {
 
   //opens appropriate selection panel
   if (document.getElementById("type").value === "automata") {
-    let machine_model = document.getElementById("model").value;
-    let panel = document.getElementById(machine_model + "-transition-panel");
+    let panel = document.getElementById("transition-panel");
     panel.style.display = "block";
   }
 
