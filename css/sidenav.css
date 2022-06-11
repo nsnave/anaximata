@@ -11,23 +11,17 @@
   white-space: nowrap; /* prevents word wrap in sidenav */
 }
 
-/* The navigation menu links */
-.sidenav a {
-  padding: 8px 8px 8px 32px;
-  text-decoration: none;
-  font-size: 25px;
-  color: #8f8f8f; /* was #818181 */
-  display: block;
-  transition: 0.3s ease-out;
-}
-
 /* When you mouse over the navigation links, change their color */
-.sidenav a:hover {
+.sidenav .sidenavbtn:hover {
   color: #f1f1f1;
 }
 
 /* Position and style the close button (top right corner) */
 .sidenav .sidenavbtn {
+  text-decoration: none;
+  color: #8f8f8f; /* was #818181 */
+  transition: 0.3s ease-out;
+
   padding: 8px 8px 8px 8px;
   position: absolute;
   top: 0;
