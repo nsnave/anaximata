@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Anaximata</title>
+
+    <!-- Konva Library for Canvas Graphics -->
+    <script type="text/javascript" src="lib/konva.min.js"></script>
+
+    <!-- CSS -->
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f0f0f0;
+      }
+      .freeze {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+    </style>
+
+    <!-- CSS Linked Stylesheets -->
+    <link rel="stylesheet" type="text/css" href="css/graphics.css" />
+
+    <link rel="stylesheet" type="text/css" href="css/sidenav.css" />
+    <link rel="stylesheet" type="text/css" href="css/options.css" />
+    <link rel="stylesheet" type="text/css" href="css/display.css" />
+  </head>
+  <body>
+    <!-- Navigation Bar; Top Section -->
+    <div id="navbar"></div>
+
+    <!-- Options Menu; Left Section -->
+    <div id="leftsidenav" class="sidenav" style="width: 250px; left: 0">
+      <a
+        id="leftnavbtn"
+        href="javascript:void(0)"
+        class="sidenavbtn"
+        style="right: 0"
+        onclick="closeLeftNav()"
+        >&laquo;</a
+      ><a
+        id="downloadbtn"
+        href="javascript:void(0)"
+        class="sidenavbtn"
+        style="left: 0"
+        onclick="downloadCanvas()"
+        >&#10515;</a
+      >
+      <div id="options">
+        <label class="title">Type</label><cap></cap>
+        <select id="type">
+          <option value="automata">Transition Diagram</option>
+          <!--<option value="graph">Graph</option>-->
+        </select>
+        <br /><br /><br />
+
+        <!-- Transition Diagram Options -->
+        <div id="automata" class="option-content">
+          <!--
+          <label class="title">Machine Model</label><cap></cap>
+          <select id="model">
+            <option value="finite">DFA/NFA/&epsilon;-NFA</option>
+            <option value="push-down">PDA</option>
+            <option value="turing">Turing Machine</option>
+          </select>
+          <br /><br />-->
+
+          <label class="title">Transition Diagram Tools</label><cap></cap>
+          <button id="select" class="mode_button">Select/Move Element</button>
+          <button id="insert_state" class="mode_button mode_button_active">
+            Insert State
+            <div class="label-textbox">
+              Text:
+              <input type="text" id="state-textbox" />
+            </div>
+          </button>
+          <button id="insert_transition" class="mode_button">
+            Insert Transition
+            <div class="label-textbox">
+              Text:
+              <input type="text" id="transition-textbox" />
+              <p>Use \e for an epsilon, -> for an arrow, and \n for newline.</p>
+            </div>
+          </button>
+          <button id="remove" class="mode_button">Remove Element</button>
+          <button id="mark_initial" class="mode_button">
+            Mark/Unmark Initial State
+          </button>
+          <button id="mark_final" class="mode_button">
+            Mark/Unmark Final State
+          </button>
+        </div>
+
+        <!-- Graph Options -->
+        <div id="graph" class="option-content">
+          <label class="title">Edge Type</label><cap></cap>
+          <div class="radio">
+            <input
+              type="radio"
+              name="edge-type"
+              id="radio-directed"
+              value="directed"
+            />
+            <label for="radio-directed">Directed</label>
+          </div>
+          <div class="radio">
+            <input
+              type="radio"
+              name="edge-type"
+              id="radio-undirected"
+              value="undirected"
+            />
+            <label for="radio-undirected">Undirected</label>
+          </div>
+          <br />
+
+          <label class="title">Graph Tools</label><cap></cap>
+          <button id="select_graph" class="mode_button">Select</button>
+          <button id="insert_vertex" class="mode_button">Insert Vertex</button>
+          <button id="insert_edge" class="mode_button">Insert Edge</button>
+          <button id="remove_graph" class="mode_button">
+            Remove Vertex/Edge
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas; Middle Section -->
+    <div id="graphics">
+      <div id="canvas"></div>
+      <div id="canvasbar">
+        <!--<input type="text" id="textbox" />
+        <button id="textbox-submit">Submit</button>-->
+      </div>
+    </div>
+
+    <!-- Display Menu; Right Section -->
+    <div id="rightdivider" class="vdivider"></div>
+
+    <div id="rightsidenav" class="sidenav" style="width: 32px; right: 0">
+      <a
+        id="rightnavbtn"
+        href="javascript:void(0)"
+        class="sidenavbtn"
+        style="left: 0"
+        onclick="openRightNav()"
+        >&laquo;</a
+      >
+      <div id="display">
+        <div id="selection-display">
+          <button
+            id="selection-title"
+            class="accordion accordion_active_default"
+          >
+            Selection Data
+          </button>
+          <div id="selection-panels" class="panel panel_open_default">
+            <div id="transition-panel" class="selection-panel">
+              <p>transition</p>
+            </div>
+            <div id="state-panel" class="selection-panel"></div>
+            <div id="graph-edge-panel" class="selection-panel"></div>
+            <div id="vertex-panel" class="selection-panel"></div>
+          </div>
+        </div>
+
+        <div id="main-displays">
+          <div id="automata-main-display" class="main-display">
+            <button class="accordion accordion_active_default">
+              General Information
+            </button>
+            <div class="panel panel_open_default">
+              <p>information...</p>
+            </div>
+
+            <button class="accordion">Algorithms</button>
+            <div class="panel">
+              <p>something else...</p>
+            </div>
+
+            <button class="accordion">Section 3</button>
+            <div class="panel">
+              <p>something...</p>
+            </div>
+          </div>
+
+          <div id="graph-main-display" class="main-display">
+            <button class="accordion accordion_active_default">
+              General Information
+            </button>
+            <div class="panel panel_open_default">
+              <p>graph stuff...</p>
+            </div>
+
+            <button class="accordion">Algorithms</button>
+            <div class="panel">
+              <p>more stuff...</p>
+            </div>
+
+            <button class="accordion">Section 3</button>
+            <div class="panel">
+              <p>stuff...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="text/javascript" src="scripts/utilities.js"></script>
+    <script type="text/javascript" src="scripts/sidenav.js"></script>
+
+    <script type="text/javascript" src="scripts/canvas.js"></script>
+
+    <script type="text/javascript" src="scripts/options.js"></script>
+    <script type="text/javascript" src="scripts/divider.js"></script>
+    <script type="text/javascript" src="scripts/display.js"></script>
+  </body>
+</html>
